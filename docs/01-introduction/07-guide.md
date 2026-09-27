@@ -27,7 +27,7 @@ Some good examples:
 Use [`AGENTS.md`](./04-customize.md#memory-creation-instructions) and [skills](./04-customize.md#memory-writing-instructions) for rules.
 
 3. **Directory names act as search tags, so they matter when searching memories.** Use straightforward names, like `errors/`, `gotchas/`, `decisions/`, `architecture/`.
-4. **You may create your own custom tags,** e.g. `kind`, `anchors`, Linear URLs, etc.
+4. **You may create your own custom tags,** e.g. `kind`, `sentry`, Linear URLs, etc.
 5. **Prefer a custom `retireWhen` field** when you can name an objective test for making this memory obsolete:
 
 ```yaml title="memory.md"
