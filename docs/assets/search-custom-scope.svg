@@ -1,11 +1,4 @@
-<!--
-  The same workspace appears twice. Search runs from acme-app/apps/api/auth.
-  Green memory files are searched; gray memory files have scopes outside apps/api/auth.
-  The team memory is included because availableToWorkspace is enabled.
--->
 <svg xmlns="http://www.w3.org/2000/svg" width="1222" height="1060" viewBox="0 0 1222 1060" role="img" aria-labelledby="title desc">
-  <title id="title">Search checks each memory’s scope</title>
-  <desc id="desc">Search runs from acme-app/apps/api/auth. Both trees contain memory-a and memory-b at the project root, memory-c and memory-d in apps/api, memory-e in apps/web, memory-f in apps/mobile, and memory-g in web-platform-team. Memory files start gray on the left. On the right, memory-a, memory-c, and memory-g are searched and turn green; the others remain gray. Four memory.md previews show their scopes. Memory-a lists apps/api and apps/web; apps/api is green because it contains the searched path. Memory-b lists apps/web and apps/mobile, so it is skipped. Memory-c has the matching apps/api/auth scope in green. Memory-d has apps/api/billing and is skipped. The team memory is available because availableToWorkspace is enabled.</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M32 0H0V32" fill="none" stroke="#21201f" stroke-width="1"/>

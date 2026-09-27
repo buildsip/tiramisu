@@ -1,11 +1,4 @@
-<!--
-  The same workspace appears twice. Search runs from acme-app/apps/api.
-  Green memory files are searched; gray memory files belong to sibling apps.
-  The team memory is included because availableToWorkspace is enabled.
--->
 <svg xmlns="http://www.w3.org/2000/svg" width="1020" height="924" viewBox="0 0 1020 924" role="img" aria-labelledby="title desc">
-  <title id="title">Which memory files search checks</title>
-  <desc id="desc">Two matching file trees show acme-app with api, web, and mobile apps, plus web-platform-team. Memory files start gray in the workspace. Searching from acme-app/apps/api turns memory-a at the project root, memory-b in api, and memory-e in the team repository green. Memory-c in web and memory-d in mobile remain gray. The team memory is available because availableToWorkspace is enabled.</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path d="M32 0H0V32" fill="none" stroke="#21201f" stroke-width="1"/>
