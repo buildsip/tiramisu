@@ -94,10 +94,10 @@ id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0
 created: 2026-09-19
 title: Axios retry duplication after reconnect
 
-anchors:
-  - packages/api/src/websocket.ts
 linear: https://linear.app/acme/issue/ACM-86/axios-reconnect-issue
-sentry: https://sentry.io/organizations/acme/issues/12345/
+sentry:
+- https://sentry.io/organizations/acme/issues/12345/
+- https://sentry.io/organizations/acme/issues/67890/
 retireWhen: Zero occurrences in Sentry for 60 days
 ---
 

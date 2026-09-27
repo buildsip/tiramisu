@@ -28,7 +28,7 @@ Define a JSON schema in your `tiramisu.json` file:
   "frontmatter": {
     "custom": {
       "properties": {
-        "anchors": {
+        "sentry": {
           "type": "array",
           "items": {
             "type": "string"
@@ -38,7 +38,7 @@ Define a JSON schema in your `tiramisu.json` file:
           "type": "string"
         }
       },
-      "required": ["anchors"],
+      "required": ["linear"],
       "additionalProperties": false
     }
   }

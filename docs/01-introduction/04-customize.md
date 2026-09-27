@@ -21,7 +21,7 @@ Use the `my-custom-memory-writing` skill before calling the `insert-memory` and 
 
 Custom frontmatter fields act as searchable tags.
 
-You may create your own custom tags, e.g. `kind`, `anchors`, Linear URLs, etc.
+You may create your own custom tags, e.g. `kind`, `sentry`, Linear URLs, etc.
 
 Example:
 
@@ -32,8 +32,6 @@ created: 2026-09-19
 title: Axios retry duplication after reconnect
 
 # custom fields
-anchors:
-  - packages/api/src/websocket.ts
 linear: https://linear.app/acme/issue/ACM-86/axios-reconnect-issue
 sentry: https://sentry.io/organizations/acme/issues/12345/
 deleteWhen: Zero occurrences in Sentry for 60 days
