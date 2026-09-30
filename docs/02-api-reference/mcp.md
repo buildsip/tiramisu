@@ -45,30 +45,6 @@ Memories are automatically placed into the deepest package or repo root containi
 > [!TIP]
 > After insert returns, the agent may add [attachments](./file-conventions.md#attachments) beside `memory.md` in the returned directory when useful. Attachments are supporting files, such as images or long documents, and are not searchable.
 
-<details>
-
-<summary>CLI equivalent: `tiramisu insert`</summary>
-
-```bash title="Terminal"
-tiramisu insert --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app <<'EOF'
-{
-  "body": "Retry the client once after a reconnect; do not stack interceptors.",
-  "frontmatter": {
-    "title": "Axios retry duplication after reconnect",
-    "scope": ["apps/web"]
-  }
-}
-EOF
-```
-
-Alternatively, you may pass the `.json` file using the `--input` flag.
-
-```bash title="Terminal"
-tiramisu insert --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --input new-memory.json
-```
-
-</details>
-
 ## `update-memory`
 
 Updates an existing memory. Omitted fields retain their values. A path-only call repairs the title folder.
@@ -112,26 +88,6 @@ Memories are automatically placed into the deepest package or repo root containi
 > [!TIP]
 > After update returns, the agent may add [attachments](./file-conventions.md#attachments) beside `memory.md` in the returned directory when useful. Attachments are supporting files, such as images or long documents, and are not searchable.
 
-<details>
-
-<summary>CLI equivalent: `tiramisu update`</summary>
-
-```bash title="Terminal"
-tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/.memories/cache-responses <<'EOF'
-{
-  "body": "Invalidate cached responses when permissions change."
-}
-EOF
-```
-
-Alternatively, you may pass the `.json` file using the `--input` flag.
-
-```bash title="Terminal"
-tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/.memories/cache-responses --input updated-memory.json
-```
-
-</details>
-
 ## `search-memories`
 
 Searches the memories.
@@ -174,16 +130,6 @@ Search reads memories from:
 
 During search, memory titles get a 3x boost and directory tags get a 2x boost.
 
-<details>
-
-<summary>CLI equivalent: `tiramisu search`</summary>
-
-```bash title="Terminal"
-tiramisu search --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --query "axios retry"
-```
-
-</details>
-
 ## `delete-memories`
 
 Deletes memories and their attachments.
@@ -205,18 +151,6 @@ Passing the `path` to a memory tagged with [`doNotDelete`](./memory-format.md#do
 [Nested memories (anti-pattern)](../01-introduction/07-guide.md#nesting-a-memory-inside-another-memory) must be selected explicitly when deleting their parent folder.
 
 Paths may span multiple Git repositories within the workspace.
-
-<details>
-
-<summary>CLI equivalent: `tiramisu delete`</summary>
-
-```bash title="Terminal"
-tiramisu delete \
-  --paths /Users/adam/Desktop/acme/acme-app/.memories/one \
-  --paths /Users/adam/Desktop/acme/acme-cli/.memories/two
-```
-
-</details>
 
 ## `upvote-memories`
 
@@ -241,18 +175,6 @@ Upvotes useful memories. Upvotes requested by the user are recorded as `human`. 
 > [!WARNING]
 > Updates already record an agent upvote when [pruning](./configuration.md#prune) is enabled. Do not add another upvote for the update alone.
 
-<details>
-
-<summary>CLI equivalent: `tiramisu upvote`</summary>
-
-```bash title="Terminal"
-tiramisu upvote \
-  --paths /Users/adam/Desktop/acme/acme-app/.memories/cache-error \
-  --actor human
-```
-
-</details>
-
 ## `prune-memories`
 
 > This feature requires [pruning](./configuration.md#prune) to be enabled.
@@ -272,13 +194,3 @@ When candidates exist, the agent is instructed to read each memory and check its
 | Parameter | Required | Description                          |
 | --------- | -------- | ------------------------------------ |
 | `repo`    | Yes      | Absolute path to the git repository. |
-
-<details>
-
-<summary>CLI equivalent: `tiramisu prune`</summary>
-
-```bash title="Terminal"
-tiramisu prune --repo /Users/adam/Desktop/acme/acme-app
-```
-
-</details>

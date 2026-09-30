@@ -1,3 +1,5 @@
+import { recordToolCounts } from "../record-tool-counts";
+import { telemetry } from "../telemetry";
 import type { Command } from "commander";
 import { randomUUID } from "node:crypto";
 import type { z } from "zod";
@@ -59,14 +61,20 @@ export function registerInsertCommand({ program }: { program: Command }) {
     )
     .option("--input <file>", "Read one memory JSON object from a file; omit or use - for stdin.")
     .action(async (options: { roots: string[]; repo: string; input?: string }) => {
-      const value = await readJsonInput({
-        file: options.input,
-        label: "insert",
-        example:
-          '{"body":"Markdown content","frontmatter":{"title":"Memory title","scope":["apps/web/auth"]}}',
+      return telemetry.run({
+        tool: "insert-memory",
+        run: async () => {
+          const value = await readJsonInput({
+            file: options.input,
+            label: "insert",
+            example:
+              '{"body":"Markdown content","frontmatter":{"title":"Memory title","scope":["apps/web/auth"]}}',
+          });
+          const input = parseValue({ schema: insertSchema, value, label: "insert input" });
+          const result = await insert({ ...input, roots: options.roots, repo: options.repo });
+          recordToolCounts({ name: "insert-memory", result });
+          process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+        },
       });
-      const input = parseValue({ schema: insertSchema, value, label: "insert input" });
-      const result = await insert({ ...input, roots: options.roots, repo: options.repo });
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     });
 }

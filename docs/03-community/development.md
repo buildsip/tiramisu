@@ -39,3 +39,13 @@ bun run release major
 ```
 
 The release script updates the CLI version and Bun lockfile together, commits them, creates an annotated version tag, and pushes the commit and tag. The publish workflow runs the same checks, then publishes through npm with provenance.
+
+### Telemetry
+
+When running the CLI from a source checkout, including a linked installation, events are appended to `~/.tiramisu/telemetry-debug.jsonl` instead of sent to PostHog.
+
+To watch the events:
+
+```bash title="Terminal"
+tail -f ~/.tiramisu/telemetry-debug.jsonl
+```

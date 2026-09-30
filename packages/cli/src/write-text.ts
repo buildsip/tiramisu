@@ -6,7 +6,8 @@ import { NAMES } from "./names";
 
 /**
  * Stages complete settings text beside its destination, then publishes it.
- * `previous` is the text read before prompting, or undefined for a new file.
+ * `previous` is the text read before editing, or undefined for a new file.
+ * `mode` sets permissions on the published file; omit it to use the usual defaults.
  * Rejects changes detected since that read; the check and replacement are separate
  * operations, so this is not a lock against concurrent writers.
  */
@@ -14,20 +15,22 @@ export function writeText({
   path,
   text,
   previous,
+  mode,
 }: {
   path: string;
   text: string;
   previous?: string;
+  mode?: number;
 }) {
   // Write to a unique temporary file first, so a failed write leaves the destination intact.
   // Keep it beside the destination: hard links require the same filesystem, as does an atomic rename.
   const temp = join(dirname(path), `${NAMES.MEM_PREFIX}${randomUUID()}.tmp`);
   try {
     // wx creates a new file exclusively; it fails instead of overwriting an existing file.
-    writeFileSync(temp, text, { flag: "wx" });
+    writeFileSync(temp, text, { flag: "wx", mode });
     const current = readTextIfExistsSync(path);
     if (current !== previous) {
-      throw new Error(`Settings changed during initialization. Run init again: ${path}`);
+      throw new Error(`Settings changed while saving. Read the file again and retry: ${path}`);
     }
     // New files are linked exclusively; existing files are replaced only after a complete write.
     // A hard link publishes the finished file under its final name and fails if that name exists.

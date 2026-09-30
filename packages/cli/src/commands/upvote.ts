@@ -1,3 +1,5 @@
+import { recordToolCounts } from "../record-tool-counts";
+import { telemetry } from "../telemetry";
 import type { Command } from "commander";
 import { dirname } from "node:path";
 import { readPruneConfig } from "../read-prune-config";
@@ -11,6 +13,7 @@ export async function upvote({ paths, actor }: { paths: string[]; actor: "human"
       'Provide actor as "human" when the user asked for an upvote, or "agent" when a memory helped produce the reply.',
     );
   const memories = await selectMemories({ paths });
+  telemetry.set({ actor });
   const batches = [];
   const skipped = [];
   // Check every selected root before writing; disabled pruning skips only that repo.
@@ -34,6 +37,7 @@ export async function upvote({ paths, actor }: { paths: string[]; actor: "human"
   try {
     for (const batch of batches) {
       await recordUpvotes({ ...batch, actor });
+      telemetry.add({ recorded_count: batch.ids.length });
     }
   } catch (error) {
     throw new Error(
@@ -61,7 +65,13 @@ export function registerUpvoteCommand({ program }: { program: Command }) {
       "human for user-requested upvotes; agent for useful context.",
     )
     .action(async (options: { paths: string[]; actor: "human" | "agent" }) => {
-      const result = await upvote(options);
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return telemetry.run({
+        tool: "upvote-memories",
+        run: async () => {
+          const result = await upvote(options);
+          recordToolCounts({ name: "upvote-memories", result });
+          process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+        },
+      });
     });
 }

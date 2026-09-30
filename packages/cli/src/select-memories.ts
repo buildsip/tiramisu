@@ -6,6 +6,7 @@ import type { Memory } from "./memory";
 import { resolveMemoryFile } from "./resolve-memory-file";
 import { NAMES } from "./names";
 import { readMemory } from "./read-memory";
+import { telemetry } from "./telemetry";
 
 /** Validates a complete mixed-repo selection before any file or database write. */
 export async function selectMemories({ paths }: { paths: string[] }) {
@@ -41,6 +42,7 @@ export async function selectMemories({ paths }: { paths: string[] }) {
         `Use the memory's actual absolute directory path inside ${repo}; symbolic links and path aliases are not supported: ${input}.`,
       );
     const path = await resolveMemoryFile({ path: target, repo });
+    await telemetry.setProject({ repo });
     if (selected.has(path)) continue;
     // Discover valid stores once per repository, but read only the selected memory files.
     if (!stores.has(repo)) {
