@@ -14,7 +14,7 @@ icon: Rocket
 
 - Hierarchical memory [scoping](./02-what-is-tiramisu.md#how-does-search-work)
 - [Separate](../02-api-reference/configuration.md#availabletoworkspace) project, personal, team, and organization memories
-- Easy [pruning](./06-upvotes-and-pruning.md)
+- Easy [pruning](./05-upvotes-and-pruning.md)
 - [Custom](./04-customize.md) memory schemas and writing rules
 - Supports [many languages and agent harnesses](./03-compatibility.md)
 
@@ -22,7 +22,7 @@ icon: Rocket
 
 ### Step 1: Configure pruning (Optional)
 
-[Upvotes and pruning](./06-upvotes-and-pruning.md) reduce stale memories.
+[Upvotes and pruning](./05-upvotes-and-pruning.md) reduce stale memories.
 
 When a memory helps solve a task, it gets upvoted, which extends its lifespan. These events are stored in the [database](../02-api-reference/database.md). On request, the agent can prune memories, meaning it reviews expired memories and suggests updates or deletions.
 
@@ -84,3 +84,98 @@ yarn dlx tiramisu@latest init
 ```bash package="bun"
 bunx --bun tiramisu@latest init
 ```
+
+## Manual Installation
+
+1. Install the `tiramisu` CLI:
+
+```bash package="npm"
+npm i -g tiramisu
+```
+
+```bash package="pnpm"
+pnpm i -g tiramisu
+```
+
+```bash package="yarn"
+yarn i -g tiramisu
+```
+
+```bash package="bun"
+bun i -g tiramisu
+```
+
+2. Create `tiramisu.json` at the root of your repository with the [options](../02-api-reference/configuration.md) you want:
+
+```json title="tiramisu.json"
+{
+  "version": 1,
+  "availableToWorkspace": false,
+  "prune": {
+    "unvotedTtl": "90d",
+    "humanUpvoteTtl": "180d",
+    "agentUpvoteTtl": "90d",
+    "databaseUrlCommand": "doppler secrets get TIRAMISU_DATABASE_URL --plain"
+  }
+}
+```
+
+3. Add the MCP tools:
+
+**Option 1: Using `add-mcp`**
+
+```bash package="npm"
+npx add-mcp "tiramisu mcp" -g --auto-approve
+```
+
+```bash package="pnpm"
+pnpm dlx add-mcp "tiramisu mcp" -g --auto-approve
+```
+
+```bash package="yarn"
+yarn dlx add-mcp "tiramisu mcp" -g --auto-approve
+```
+
+```bash package="bun"
+bunx --bun add-mcp "tiramisu mcp" -g --auto-approve
+```
+
+**Option 2: Manual installation**
+
+Refer to your agent's documentation on how to add a global MCP server.
+
+Add:
+
+```bash
+tiramisu mcp
+```
+
+4. Add the memory writing skill:
+
+```bash package="npm"
+npx skills add buildsip/tiramisu --global
+```
+
+```bash package="pnpm"
+pnpm dlx skills add buildsip/tiramisu --global
+```
+
+```bash package="yarn"
+yarn dlx skills add buildsip/tiramisu --global
+```
+
+```bash package="bun"
+bunx --bun skills add buildsip/tiramisu --global
+```
+
+5. VS Code / Cursor memory tab labels
+
+```json title="vscode/settings.json"
+{
+  "workbench.editor.customLabels.patterns": {
+    "**/.memories/**/memory.md": "${dirname}/memory.md"
+  }
+}
+```
+
+6. If you've enabled [pruning](./05-upvotes-and-pruning.md), migrate your database using the drizzle schema from [`tiramisu/packages/cli/migrations`](../../packages/cli/migrations).

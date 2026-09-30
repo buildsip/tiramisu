@@ -7,7 +7,7 @@ icon: Puzzle
 
 Tiramisu automatically adds the MCP tools to these agents.
 
-If your agent harness isn't on this list, you might still be able to install the MCP and skill [manually](./05-manual-installation.md).
+If your agent harness isn't on this list, you might still be able to install the MCP and skill [manually](./01-quick-start.md#manual-installation).
 
 | Agent                  |
 | ---------------------- |
