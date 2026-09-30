@@ -79,6 +79,7 @@ export const telemetrySchema = z.object({
       error_category: optional(
         z.enum([
           "operation",
+          "permission_denied",
           "invalid_input",
           "filesystem",
           "connection",

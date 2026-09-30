@@ -18,6 +18,7 @@ import { saveMemory } from "../save-memory";
 import { readPruneConfig } from "../read-prune-config";
 import { recordUpvotes } from "../record-upvotes";
 import { NAMES } from "../names";
+import { PermissionDeniedError } from "../permission-denied-error";
 
 /**
  * Updates only supplied fields on an existing memory; id and created never change.
@@ -50,7 +51,7 @@ export async function update({
     );
   }
   if (existing.frontmatter.doNotEdit) {
-    throw new Error(
+    throw new PermissionDeniedError(
       `You cannot edit this memory because doNotEdit is true: ${dirname(existing.path)}. Ask the user to edit it.`,
     );
   }

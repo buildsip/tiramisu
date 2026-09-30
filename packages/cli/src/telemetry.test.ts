@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it, spyOn } from "bun:test";
@@ -10,6 +10,8 @@ import { trackTransport } from "./mcp/track-transport";
 import { insertMemory } from "./mcp/insert-memory";
 import { telemetry } from "./telemetry";
 import { registerSearchCommand } from "./commands/search";
+import { registerDeleteCommand } from "./commands/delete-memories";
+import { registerUpdateCommand } from "./commands/update";
 import { Command } from "commander";
 import { getProjectId } from "./get-project-id";
 
@@ -131,6 +133,80 @@ it("times SDK validation failures and unknown tools without exposing supplied na
   expect(JSON.stringify(events)).not.toContain("secret");
   expect(Number(events[0]!.properties.duration_ms)).toBeGreaterThanOrEqual(0);
 });
+
+it.each(["delete-memories", "update-memory"])(
+  "classifies protected %s calls as permission denials through MCP and CLI",
+  async (tool) => {
+    const inserted = await client.callTool({
+      name: "insert-memory",
+      arguments: {
+        roots: [repo],
+        repo,
+        body: "private memory contents",
+        frontmatter: {
+          title: "Private protected memory",
+          scope: ["."],
+          doNotDelete: true,
+          doNotEdit: true,
+        },
+      },
+    });
+    const path = JSON.parse((inserted.content as { text: string }[])[0]!.text)[0] as string;
+    const file = join(path, "memory.md");
+    const before = await readFile(file, "utf8");
+    await settle();
+    events.length = 0;
+
+    const result = await client.callTool({
+      name: tool,
+      arguments:
+        tool === "delete-memories"
+          ? { paths: [path] }
+          : { roots: [repo], repo, path, frontmatter: { doNotEdit: false } },
+    });
+    await settle();
+    expect(result.isError).toBe(true);
+    const message = (result.content as { text: string }[])[0]!.text;
+    const flag = tool === "delete-memories" ? "doNotDelete" : "doNotEdit";
+    const action = tool === "delete-memories" ? "delete" : "edit";
+    expect(message).toBe(
+      `You cannot ${action} this memory because ${flag} is true: ${path}. Ask the user to ${action} it.`,
+    );
+
+    // Commander runs the same domain command, but the CLI has its own telemetry boundary.
+    const program = new Command();
+    if (tool === "delete-memories") {
+      registerDeleteCommand({ program });
+      await expect(
+        program.parseAsync(["node", "tiramisu", "delete", "--paths", path]),
+      ).rejects.toThrow(message);
+    } else {
+      registerUpdateCommand({ program });
+      const input = join(temp, "input.json");
+      await writeFile(input, JSON.stringify({ frontmatter: { doNotEdit: false } }));
+      await expect(
+        program.parseAsync([
+          "node", "tiramisu", "update", "--roots", repo, "--repo", repo,
+          "--path", path, "--input", input,
+        ]),
+      ).rejects.toThrow(message);
+    }
+
+    expect(events).toHaveLength(2);
+    for (const [index, source] of ["mcp", "cli"].entries()) {
+      expect(events[index]!.properties).toMatchObject({
+        tool,
+        source,
+        outcome: "error",
+        error_category: "permission_denied",
+      });
+      expect(events[index]!.properties.affected_count).toBeUndefined();
+    }
+    expect(JSON.stringify(events)).not.toContain("private");
+    expect(JSON.stringify(events)).not.toContain(path);
+    expect(await readFile(file, "utf8")).toBe(before);
+  },
+);
 
 it("includes response instructions in duration and keeps concurrent calls separate", async () => {
   const original = insertMemory.call;

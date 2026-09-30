@@ -6,6 +6,7 @@ import type { Command } from "commander";
 import { rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { NAMES } from "../names";
+import { PermissionDeniedError } from "../permission-denied-error";
 
 /**
  * Deletes selected memory folders, including their attachments.
@@ -22,7 +23,7 @@ export async function deleteMemories({ paths }: { paths: string[] }) {
   for (const memory of batch) {
     const canonical = memory.path;
     if (memory.frontmatter.doNotDelete) {
-      throw new Error(
+      throw new PermissionDeniedError(
         `You cannot delete this memory because doNotDelete is true: ${dirname(canonical)}. Ask the user to delete it.`,
       );
     }
