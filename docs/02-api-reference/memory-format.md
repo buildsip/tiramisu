@@ -30,7 +30,7 @@ The id is used to track the memory across renames, and for upvotes when those ar
 
 ### created
 
-Required. UTC calendar date when the memory was inserted (`YYYY-MM-DD`). Don't change it. [Pruning](../01-introduction/06-upvotes-and-pruning.md) uses this date for the unvoted lifetime.
+Required. UTC calendar date when the memory was inserted (`YYYY-MM-DD`). Don't change it. [Pruning](../01-introduction/05-upvotes-and-pruning.md) uses this date for the unvoted lifetime.
 
 ### title
 

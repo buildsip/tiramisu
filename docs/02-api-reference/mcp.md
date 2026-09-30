@@ -148,7 +148,7 @@ Deletes memories and their attachments.
 
 Passing the `path` to a memory tagged with [`doNotDelete`](./memory-format.md#donotdelete) blocks the entire operation.
 
-[Nested memories (anti-pattern)](../01-introduction/07-guide.md#nesting-a-memory-inside-another-memory) must be selected explicitly when deleting their parent folder.
+[Nested memories (anti-pattern)](../01-introduction/04-customize.md#anti-pattern-nesting-a-memory-inside-another-memory) must be selected explicitly when deleting their parent folder.
 
 Paths may span multiple Git repositories within the workspace.
 
