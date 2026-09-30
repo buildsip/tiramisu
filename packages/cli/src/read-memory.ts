@@ -4,6 +4,7 @@ import { parseDocument } from "yaml";
 import { storedFrontmatterSchema } from "./stored-frontmatter-schema";
 import { parseValue } from "./parse-value";
 import type { Memory } from "./memory";
+import { telemetry } from "./telemetry";
 
 const cache = new Map<string, { stamp: string; frontmatter: unknown; body: string }>();
 
@@ -26,6 +27,7 @@ export async function readMemory({
   const info = await stat(path, { bigint: true });
   const stamp = `${info.mtimeNs}:${info.ctimeNs}:${info.size}:${info.ino}`;
   let parsed = cache.get(path);
+  telemetry.add({ [parsed?.stamp === stamp ? "cache_hits" : "cache_misses"]: 1 });
   if (parsed?.stamp !== stamp) {
     const source = await readFile(path, "utf8");
     // Parse only the delimited header; Markdown bodies never go through the YAML parser.

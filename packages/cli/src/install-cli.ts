@@ -1,3 +1,5 @@
+import { cancelInit } from "./cancel-init";
+
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
@@ -122,7 +124,7 @@ export async function installCli(
       message: `Upgrade ${cli.name} from ${installed?.version ?? version} to ${latest}?`,
       initialValue: true,
     });
-    if (isCancel(upgrade)) throw new Error(`${CLI_NAME} init cancelled.`);
+    if (isCancel(upgrade)) cancelInit();
     if (upgrade) {
       version = latest;
       install = true;

@@ -1,3 +1,5 @@
+import { recordToolCounts } from "../record-tool-counts";
+import { telemetry } from "../telemetry";
 import { findNestedMemories } from "../find-nested-memories";
 import { selectMemories } from "../select-memories";
 import type { Command } from "commander";
@@ -41,7 +43,10 @@ export async function deleteMemories({ paths }: { paths: string[] }) {
   }
   // Descendant paths are longer: delete them before removing their parent folders.
   const deleted = [...selected].map((path) => dirname(path)).sort((a, b) => b.length - a.length);
-  for (const path of deleted) await rm(path, { recursive: true, force: true });
+  for (const path of deleted) {
+    await rm(path, { recursive: true, force: true });
+    telemetry.add({ affected_count: 1 });
+  }
   return deleted;
 }
 
@@ -54,7 +59,13 @@ export function registerDeleteCommand({ program }: { program: Command }) {
       "Absolute memory directory paths returned by memory commands; repeatable.",
     )
     .action(async (options: { paths: string[] }) => {
-      const result = await deleteMemories(options);
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return telemetry.run({
+        tool: "delete-memories",
+        run: async () => {
+          const result = await deleteMemories(options);
+          recordToolCounts({ name: "delete-memories", result });
+          process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+        },
+      });
     });
 }

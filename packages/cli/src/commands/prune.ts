@@ -1,3 +1,4 @@
+import { telemetry } from "../telemetry";
 import type { Command } from "commander";
 import { dirname, isAbsolute } from "node:path";
 import { CLI_NAME } from "../cli-name";
@@ -16,6 +17,7 @@ export async function prune({ repo }: { repo: string }) {
     );
   }
   const owner = await resolveGitRoot(repo);
+  await telemetry.setProject({ repo: owner });
   const config = await readPruneConfig(owner);
   if (!config) {
     throw new Error(
@@ -24,15 +26,19 @@ export async function prune({ repo }: { repo: string }) {
   }
   // Include this repository's root and package stores, regardless of memory scopes.
   const { stores } = await findStores({ repo: owner, project: owner });
-  const memories = (await loadMemories({ stores, repo: owner })).filter(
-    (memory) => !memory.frontmatter.doNotDelete,
-  );
+  const loaded = await loadMemories({ stores, repo: owner });
+  const memories = loaded.filter((memory) => !memory.frontmatter.doNotDelete);
+  telemetry.set({ scanned_count: loaded.length, eligible_count: memories.length });
   const now = Date.now();
   const candidates: string[] = [];
-  const votes = await readUpvotes({
-    repo: owner,
-    command: config.command,
-    ids: memories.map((memory) => memory.frontmatter.id),
+  const votes = await telemetry.measure({
+    name: "database",
+    run: () =>
+      readUpvotes({
+        repo: owner,
+        command: config.command,
+        ids: memories.map((memory) => memory.frontmatter.id),
+      }),
   });
   for (const memory of memories) {
     const last = votes.get(memory.frontmatter.id);
@@ -44,6 +50,7 @@ export async function prune({ repo }: { repo: string }) {
     );
     if (now >= expires) candidates.push(dirname(memory.path));
   }
+  telemetry.set({ candidate_count: candidates.length });
   return candidates.sort((a, b) => a.localeCompare(b));
 }
 
@@ -54,6 +61,11 @@ export function registerPruneCommand({ program }: { program: Command }) {
     .description("List expired memories in one repository for review without deleting them.")
     .requiredOption("--repo <path>", "Absolute Git root path of the repository to prune.")
     .action(async (options: { repo: string }) => {
-      process.stdout.write(`${JSON.stringify(await prune(options), null, 2)}\n`);
+      return telemetry.run({
+        tool: "prune-memories",
+        run: async () => {
+          process.stdout.write(`${JSON.stringify(await prune(options), null, 2)}\n`);
+        },
+      });
     });
 }
