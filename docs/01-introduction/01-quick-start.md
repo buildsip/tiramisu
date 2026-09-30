@@ -4,19 +4,7 @@ description: Getting Started with Tiramisu
 icon: Rocket
 ---
 
-## Introduction
-
-**Tiramisu is an [open source](https://github.com/buildsip/tiramisu) git-native memory system for AI coding agents.** It stores curated memories as Markdown files inside your repositories, versioned alongside your code and reviewable in pull requests.
-
-![workspace structure](../assets/file-tree.svg)
-
-### Features
-
-- Hierarchical memory [scoping](./02-what-is-tiramisu.md#how-does-search-work)
-- [Separate](../02-api-reference/configuration.md#availabletoworkspace) project, personal, team, and organization memories
-- Easy [pruning](./05-upvotes-and-pruning.md)
-- [Custom](./04-customize.md) memory schemas and writing rules
-- Supports [many languages and agent harnesses](./03-compatibility.md)
+**Tiramisu is an [open source](https://github.com/buildsip/tiramisu) git-native memory system for AI coding agents.**
 
 ## Installation
 
