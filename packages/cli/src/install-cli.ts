@@ -73,9 +73,14 @@ export async function installCli(
       if (!path || !isAbsolute(path)) throw new Error("Could not locate Bun's global packages.");
       globalRoot = join(path, NAMES.NODE_MODULES);
     } catch (error) {
-      // A fresh Bun installation has no global package.json yet.
+      // Fresh and linked-only Bun global directories can have no lockfile.
+      // Let the global add command create it instead of aborting setup.
       const stderr = String((error as { stderr?: unknown }).stderr ?? "");
-      if (!stderr.includes("No package.json was found for directory")) throw error;
+      if (
+        !stderr.includes("No package.json was found for directory") &&
+        !stderr.includes("missing lockfile, nothing to list")
+      )
+        throw error;
     }
   } else {
     globalRoot = execFileSync(
