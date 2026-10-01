@@ -10,6 +10,7 @@
   "main": "index.js",
   "scripts": {
     "release": "bun scripts/release.mjs",
+    "audit": "bun audit",
     "lint": "oxlint --report-unused-disable-directives",
     "lint:fix": "oxlint --fix --fix-suggestions",
     "format": "oxfmt --write \"**/*.{ts,tsx,mjs,md}\"",
@@ -34,6 +35,16 @@
     "packages/*",
     "apps/*"
   ],
+  "overrides": {
+    "fast-uri": "3.1.8",
+    "ip-address": "10.7.1",
+    "miniflare": {
+      "undici": "7.29.1"
+    },
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.0"
+    }
+  },
   "trustedDependencies": [
     "@embedded-postgres/darwin-arm64",
     "@embedded-postgres/darwin-x64",
