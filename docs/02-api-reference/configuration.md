@@ -56,7 +56,7 @@ When the `frontmatter.custom` schema changes, existing files are not migrated or
 
 ## prune
 
-To enable [pruning](../01-introduction/01-quick-start.md#step-1-configure-pruning-optional), update your `tiramisu.json` file:
+To enable [pruning](../01-introduction/01-installation.md#step-1-configure-pruning-optional), update your `tiramisu.json` file:
 
 ```json title="tiramisu.json"
 {
