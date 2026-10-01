@@ -1,6 +1,7 @@
 import type { CallToolResult, TextContent } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
 import { parseValue } from "../parse-value";
+import { recordToolCounts } from "../record-tool-counts";
 
 /**
  * Turns a name, description, schema, and command into one MCP tool.
@@ -32,6 +33,7 @@ export function tool<T, R>({
     call: async (value: unknown): Promise<CallToolResult> => {
       const input = parseValue({ schema, value, label: `${name} arguments` });
       const result = await run(input);
+      recordToolCounts({ name, result });
       // Preserve the CLI's JSON result and add readable guidance as a separate text block.
       const content: TextContent[] = [{ type: "text", text: JSON.stringify(result, null, 2) }];
       if (instructions) {

@@ -1,3 +1,4 @@
+import { telemetry } from "./telemetry";
 import { assertNoSymlinks, lstatIfExists, walkDirectory } from "@buildsip/file-utils";
 import { join } from "node:path";
 import type { Memory } from "./memory";
@@ -22,36 +23,42 @@ export async function loadMemories({
   repo: string;
   availableToWorkspaceOnly?: boolean;
 }) {
-  const memories: Memory[] = [];
-  // Sharing is repository-wide, so read it once for all package stores.
-  const { availableToWorkspace } = await readConfig(repo);
-  if (availableToWorkspaceOnly && !availableToWorkspace) return memories;
-  for (const project of stores) {
-    const store = join(project, NAMES.MEMORIES);
-    await assertNoSymlinks({ path: store, base: repo });
-    if (!(await lstatIfExists({ path: store }))) continue;
-    const files: string[] = [];
-    for await (const { path, entry } of walkDirectory({
-      path: store,
-      skip: (entry) => entry.isDirectory() && entry.name.startsWith(NAMES.MEM_PREFIX),
-    })) {
-      if (entry.isFile() && entry.name === NAMES.MEMORY_MD) files.push(path);
-    }
-    files.sort();
-    // Bound open file handles even when a store contains thousands of memories.
-    for (let offset = 0; offset < files.length; offset += 50) {
-      memories.push(
-        ...(await Promise.all(
-          files.slice(offset, offset + 50).map((path) =>
-            readMemory({
-              path,
-              project,
-              repo,
-            }),
-          ),
-        )),
-      );
-    }
-  }
-  return memories;
+  return telemetry.stage({
+    name: "load_memories",
+    run: async () => {
+      const memories: Memory[] = [];
+      // Sharing is repository-wide, so read it once for all package stores.
+      const { availableToWorkspace } = await readConfig(repo);
+      if (availableToWorkspaceOnly && !availableToWorkspace) return memories;
+      for (const project of stores) {
+        const store = join(project, NAMES.MEMORIES);
+        await assertNoSymlinks({ path: store, base: repo });
+        if (!(await lstatIfExists({ path: store }))) continue;
+        const files: string[] = [];
+        for await (const { path, entry } of walkDirectory({
+          path: store,
+          skip: (entry) => entry.isDirectory() && entry.name.startsWith(NAMES.MEM_PREFIX),
+        })) {
+          if (entry.isFile() && entry.name === NAMES.MEMORY_MD) files.push(path);
+        }
+        files.sort();
+        // Bound open file handles even when a store contains thousands of memories.
+        for (let offset = 0; offset < files.length; offset += 50) {
+          memories.push(
+            ...(await Promise.all(
+              files.slice(offset, offset + 50).map((path) =>
+                readMemory({
+                  path,
+                  project,
+                  repo,
+                }),
+              ),
+            )),
+          );
+        }
+      }
+      telemetry.add({ loaded_count: memories.length });
+      return memories;
+    },
+  });
 }
