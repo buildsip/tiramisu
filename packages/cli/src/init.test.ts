@@ -56,7 +56,7 @@ describe("tiramisu init", () => {
   let cliRoot: string;
   let globalRoot: string;
   let latest: string;
-  let bunMissing: boolean;
+  let bunError: string | undefined;
   let failure: string | undefined;
   let cancelled: boolean | symbol;
 
@@ -79,7 +79,7 @@ describe("tiramisu init", () => {
     stubEnv({ name: "TIRAMISU_DATABASE_URL", value: "" });
     stubEnv({ name: "npm_config_user_agent", value: "pnpm/11.24.0 npm/? node/v22.0.0" });
     latest = "0.2.0";
-    bunMissing = false;
+    bunError = undefined;
     failure = undefined;
     exec.mockImplementation(((...args: Parameters<typeof execFileSync>) => {
       if (args[0] === "npx") {
@@ -92,9 +92,9 @@ describe("tiramisu init", () => {
         if (command === "root") return globalRoot;
         if (command === "global" && (args[1] as string[])[1] === "dir") return dirname(globalRoot);
         if (command === "pm") {
-          if (bunMissing)
+          if (bunError)
             throw Object.assign(new Error("No global packages"), {
-              stderr: `error: No package.json was found for directory "${dirname(globalRoot)}"`,
+              stderr: bunError,
             });
           return `${dirname(globalRoot)} node_modules (1 installed)\n└── tiramisu@0.1.0\n`;
         }
@@ -1269,11 +1269,46 @@ describe("tiramisu init", () => {
     );
   });
 
-  it("installs with Bun when no global package.json exists yet", async () => {
-    bunMissing = true;
-    stubEnv({ name: "npm_config_user_agent", value: "bun/1.3.0" });
-    await init({ cwd: root, cliRoot });
-    expect(execFileSync).toHaveBeenCalledWith("bun", ["add", "-g", cliRoot], expect.anything());
+  it.each([
+    {
+      reason: "no package.json",
+      stderr: 'error: No package.json was found for directory "/global"',
+    },
+    {
+      reason: "no lockfile",
+      stderr: "error: missing lockfile, nothing to list\nnote: run 'bun install' first",
+    },
+  ])(
+    "installs a published CLI with Bun when the global directory has $reason",
+    async ({ stderr }) => {
+      published();
+      latest = "0.1.0";
+      bunError = stderr;
+      stubEnv({ name: "npm_config_user_agent", value: "bun/1.4.2" });
+      await init({ cwd: root, cliRoot });
+      expect(execFileSync).toHaveBeenCalledWith(
+        "bun",
+        ["add", "-g", "tiramisu@0.1.0"],
+        expect.anything(),
+      );
+      expect(existsSync(join(root, NAMES.TIRAMISU_JSON))).toBe(true);
+      expect(outro).toHaveBeenCalledWith("tiramisu initialized.");
+    },
+  );
+
+  it.each([
+    "error: failed to parse lockfile: InvalidLockfile",
+    "error: failed to read lockfile: EACCES",
+  ])("does not install over Bun global listing errors (%s)", async (stderr) => {
+    bunError = stderr;
+    stubEnv({ name: "npm_config_user_agent", value: "bun/1.4.2" });
+    await expect(init({ cwd: root, cliRoot })).rejects.toThrow("No global packages");
+    expect(execFileSync).not.toHaveBeenCalledWith(
+      "bun",
+      ["add", "-g", expect.anything()],
+      expect.anything(),
+    );
+    expect(existsSync(join(root, NAMES.TIRAMISU_JSON))).toBe(false);
   });
 
   it("does not mistake a failed Bun lookup for a missing installation", async () => {

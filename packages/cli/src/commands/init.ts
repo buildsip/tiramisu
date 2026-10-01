@@ -1,3 +1,5 @@
+import { telemetry } from "../telemetry";
+import { cancelInit } from "../cancel-init";
 import { assertNoSymlinks, readTextIfExistsSync } from "@buildsip/file-utils";
 import type { Command } from "commander";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -35,7 +37,9 @@ export async function init({
   availableToWorkspace?: boolean;
   verbose?: boolean;
 }) {
+  telemetry.set({ failure_stage: "setup" });
   const root = await findRepo(cwd);
+  await telemetry.setProject({ repo: root });
   const { config, source } = await readConfig(root);
   // Setup messages use the CLI package's name, regardless of the project being configured.
   const { name } = JSON.parse(readFileSync(join(cliRoot, "package.json"), "utf8"));
@@ -43,6 +47,7 @@ export async function init({
 
   intro(`${CLI_NAME} init`);
   const initialized = source !== undefined;
+  telemetry.set({ already_configured: initialized });
   const pruning = initialized && !!config.prune;
   // Snapshot instruction and editor files before asking, so concurrent edits are detected.
   const instructions = await prepareInstructions({ root, cliRoot });
@@ -60,6 +65,7 @@ export async function init({
   const patterns = tree && findNodeAtLocation(tree, [key]);
   const label = tree && findNodeAtLocation(tree, [key, pattern]);
   let url: string | undefined;
+  telemetry.set({ failure_stage: "prompts" });
   const answers = await group<{
     availableToWorkspace: boolean | symbol;
     prune: boolean | symbol;
@@ -121,9 +127,7 @@ export async function init({
         }),
     },
     {
-      onCancel: () => {
-        throw new Error(`${CLI_NAME} init cancelled.`);
-      },
+      onCancel: cancelInit,
     },
   );
   // Repeat runs change only explicit opt-ins, keeping omitted fields and custom durations intact.
@@ -135,6 +139,10 @@ export async function init({
         prune: false,
       };
   if (availableToWorkspace) next.availableToWorkspace = true;
+  telemetry.set({
+    pruning_enabled: Boolean(answers.prune),
+    available_to_workspace: Boolean(answers.availableToWorkspace),
+  });
   if (answers.prune && !pruning) {
     next.prune = {
       unvotedTtl: "90d",
@@ -162,6 +170,7 @@ export async function init({
   }
 
   // Refresh the schema using saved credentials setup without asking for a new command.
+  telemetry.set({ failure_stage: "database" });
   if (pruning && config.prune) {
     const command = config.prune.databaseUrlCommand;
     if (!command) {
@@ -192,6 +201,7 @@ export async function init({
     );
   }
 
+  telemetry.set({ failure_stage: "install" });
   await installCli({ log }, { cwd: root, cliRoot, verbose });
   if (answers.skill) await installWritingSkill({ log }, { cwd: root, cliRoot, verbose });
 
@@ -219,11 +229,16 @@ export function registerInitCommand({ program, cliRoot }: { program: Command; cl
     .option("--availableToWorkspace", "Share this repository's memories with the workspace.")
     .option("--verbose", "Print setup command output.")
     .action(async (options: { availableToWorkspace?: boolean; verbose?: boolean }) => {
-      await init({
-        cwd: process.cwd(),
-        cliRoot,
-        availableToWorkspace: options.availableToWorkspace,
-        verbose: options.verbose,
+      return telemetry.run({
+        init: true,
+        run: async () => {
+          await init({
+            cwd: process.cwd(),
+            cliRoot,
+            availableToWorkspace: options.availableToWorkspace,
+            verbose: options.verbose,
+          });
+        },
       });
     });
 }

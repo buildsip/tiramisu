@@ -4,19 +4,49 @@ description: Introducing Tiramisu, a git-native agent memory system.
 icon: CircleQuestionMark
 ---
 
-**Tiramisu is a git-native memory system for AI coding agents.**
+**Tiramisu is a git-native memory system for AI coding agents.** It provides a set of [MCP tools](../02-api-reference/mcp.md) that store and manage **curated context** as **Markdown** files inside your repositories. Tiramisu keeps agent knowledge atomic, version-controlled, and reviewable in pull requests.
 
-Tiramisu provides a set of [MCP tools](../02-api-reference/mcp.md) that store **curated context** as **Markdown** files inside your repositories. Tiramisu keeps agent knowledge atomic, version-controlled, and reviewable in pull requests.
+![workspace structure](../assets/file-tree.svg)
+
+### Features
+
+- Hierarchical memory [scoping](#how-does-search-work)
+- [Separate](../02-api-reference/configuration.md#availabletoworkspace) project, personal, team, and organization memories
+- Easy [pruning](./05-upvotes-and-pruning.md)
+- [Custom](./04-customize.md) memory schemas and writing rules
+- Supports [many languages and agent harnesses](./03-compatibility.md)
+
+## How does search work?
+
+Memories are selected for search using hierarchical path matching: a memory's `scope` must equal, contain, or fall within a searched path. Workspace sharing, enabled through `availableToWorkspace`, also includes memories from other repositories in the workspace. Search then returns memories that match the query.
+
+### Example: Default scopes
+
+Consider the following scenario where `memory.md` files skip defining the `scope` frontmatter field. In this case, the `scope` defaults to their parent package.
+
+![search example](../assets/search.svg)
+
+### Example: Custom scopes
+
+![search example custom scopes](../assets/search-custom-scope.svg)
+
+## Why doesn't Tiramisu use vector search or reranking?
+
+Tiramisu doesn't store every conversation transcript. It stores short, curated memories that are meant to remain useful over time.
+
+Together with [scope](../02-api-reference/memory-format.md#scope), that keeps the search space small. [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) is enough without adding embeddings, vector databases, or reranking.
+
+More advanced search becomes useful when a system stores much larger amounts of noisy data, such as full conversation transcript history. Tiramisu avoids creating that problem in the first place.
 
 ## Philosophy
 
 ### Knowledge about code must generally have the same lifecycle as the code it describes
 
-Memories are committed directly to the same Git branch as the related code. They are committed alongside the code, reviewed in the same PR, and reverted if the code is reverted.
+Memories are committed alongside the code, reviewed in the same PR, and reverted if the code is reverted.
 
 Decoupled memory storage (external databases or detached background PRs) breaks git atomicity. If a feature branch is abandoned or rolled back, its memory must not linger on `main` to poison future agent runs.
 
-### Clean docs, no transcript hoarding
+### Clean memories, no transcript hoarding
 
 Store things that matter, like architectural decisions or library quirks.
 

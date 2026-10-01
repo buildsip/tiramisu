@@ -65,7 +65,7 @@ Tiramisu helps your agent access **project, personal, team, and organization** m
 > 🚧 **Status:** Alpha. The architecture and CLI are actively evolving. 🚧
 
 <p align="center">
-  <img src="./docs/assets/file-tree.svg?v=2" alt="File tree. repo/.memories is the repo memory store. apps/web/.memories is the apps/web memory store. Under .memories, folder names such as errors, gotchas, and ADRs are searchable tags. webpack-error is the memory folder, named from the title. It holds memory.md plus attachments, response.json and error.png. packages/auth/.memories is the packages/auth memory store. A sample memory.md lists scope apps/web and apps/marketing. adam-personal, acme-team-1-memories, and acme-memories are separate Git repos for personal, team, and organization memories." width="1147">
+  <img src="./docs/assets/file-tree.svg?v=3" alt="File tree. repo/.memories is the repo memory store. apps/web/.memories is the apps/web memory store. Under .memories, folder names such as errors, gotchas, and ADRs are searchable tags. webpack-error is the memory folder, named from the title. It holds memory.md plus attachments, response.json and error.png. packages/auth/.memories is the packages/auth memory store. A sample memory.md lists scope apps/web and apps/marketing. adam-personal, acme-team-1-memories, and acme-memories are separate Git repos for personal, team, and organization memories." width="1147">
 </p>
 
 # Documentation

@@ -36,7 +36,7 @@ export function parseValue<T>({
   const result = schema.safeParse(value);
   if (!result.success) {
     const issues = expand({ issues: result.error.issues, path });
-    throw new Error(`Invalid ${label}:\n${z.prettifyError({ issues })}`);
+    throw new Error(`Invalid ${label}:\n${z.prettifyError({ issues })}`, { cause: result.error });
   }
   return result.data;
 }

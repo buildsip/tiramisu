@@ -1,9 +1,12 @@
+import { recordToolCounts } from "../record-tool-counts";
+import { telemetry } from "../telemetry";
 import { findNestedMemories } from "../find-nested-memories";
 import { selectMemories } from "../select-memories";
 import type { Command } from "commander";
 import { rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { NAMES } from "../names";
+import { PermissionDeniedError } from "../permission-denied-error";
 
 /**
  * Deletes selected memory folders, including their attachments.
@@ -20,7 +23,7 @@ export async function deleteMemories({ paths }: { paths: string[] }) {
   for (const memory of batch) {
     const canonical = memory.path;
     if (memory.frontmatter.doNotDelete) {
-      throw new Error(
+      throw new PermissionDeniedError(
         `You cannot delete this memory because doNotDelete is true: ${dirname(canonical)}. Ask the user to delete it.`,
       );
     }
@@ -41,7 +44,10 @@ export async function deleteMemories({ paths }: { paths: string[] }) {
   }
   // Descendant paths are longer: delete them before removing their parent folders.
   const deleted = [...selected].map((path) => dirname(path)).sort((a, b) => b.length - a.length);
-  for (const path of deleted) await rm(path, { recursive: true, force: true });
+  for (const path of deleted) {
+    await rm(path, { recursive: true, force: true });
+    telemetry.add({ affected_count: 1 });
+  }
   return deleted;
 }
 
@@ -54,7 +60,13 @@ export function registerDeleteCommand({ program }: { program: Command }) {
       "Absolute memory directory paths returned by memory commands; repeatable.",
     )
     .action(async (options: { paths: string[] }) => {
-      const result = await deleteMemories(options);
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return telemetry.run({
+        tool: "delete-memories",
+        run: async () => {
+          const result = await deleteMemories(options);
+          recordToolCounts({ name: "delete-memories", result });
+          process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+        },
+      });
     });
 }

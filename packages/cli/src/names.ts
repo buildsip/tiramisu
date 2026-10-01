@@ -27,4 +27,9 @@ export enum NAMES {
   SETTINGS_JSON = "settings.json",
   /** Prefix for temporary memory directories and staged writes. */
   MEM_PREFIX = ".mem-",
+  /** Private global telemetry preference, installation ID, and project hashing salt. */
+  TELEMETRY_JSON = "telemetry.json",
+  /** Local event payloads from development builds of the CLI. */
+  TELEMETRY_DEBUG_JSONL = "telemetry-debug.jsonl",
+  TIRAMISU_HOME_DIR = ".tiramisu",
 }

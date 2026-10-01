@@ -12,8 +12,11 @@ import { registerInitCommand } from "./commands/init";
 import { registerSearchCommand } from "./commands/search";
 import { registerInsertCommand } from "./commands/insert";
 import { registerUpdateCommand } from "./commands/update";
+import { registerTelemetryCommand } from "./commands/telemetry";
 import { CLI_NAME } from "./cli-name";
 import { installMcp } from "./install-mcp";
+import { initTelemetry } from "./init-telemetry";
+import { trackTransport } from "./mcp/track-transport";
 import { createMcpServer } from "./mcp/create-mcp-server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -36,24 +39,33 @@ registerUpdateCommand({ program });
 registerDeleteCommand({ program });
 registerUpvoteCommand({ program });
 registerPruneCommand({ program });
+registerTelemetryCommand({ program });
 program
   .command("mcp")
   .description("Serve memory tools over MCP using stdin and stdout.")
   .action(async () => {
     const server = createMcpServer({ version: pkg.version });
-    await server.connect(new StdioServerTransport());
+    await server.connect(trackTransport(new StdioServerTransport()));
   });
 
 program.action(() => program.help());
 
 try {
-  // This also runs for help, version, and MCP startup. Warnings go to stderr to keep JSON intact.
-  const agents = await installMcp({
-    log: { warn: (message) => process.stderr.write(`${JSON.stringify({ warning: message })}\n`) },
-  });
-  // Only interactive setup gets a success message; other commands keep their machine output.
-  if (process.argv[2] === "init" && agents.length) {
-    log.success(`Memory MCP tools added to:\n${agents.map((agent) => `- ${agent}`).join("\n")}`);
+  // Preference checks and changes must not start analytics or rewrite agent configuration.
+  if (process.argv[2] !== "telemetry") {
+    await initTelemetry({
+      cliRoot,
+      version: pkg.version,
+      source: process.argv[2] === "mcp" ? "mcp" : "cli",
+    });
+    // This also runs for help, version, and MCP startup. Warnings go to stderr to keep JSON intact.
+    const agents = await installMcp({
+      log: { warn: (message) => process.stderr.write(`${JSON.stringify({ warning: message })}\n`) },
+    });
+    // Only interactive setup gets a success message; other commands keep their machine output.
+    if (process.argv[2] === "init" && agents.length) {
+      log.success(`Memory MCP tools added to:\n${agents.map((agent) => `- ${agent}`).join("\n")}`);
+    }
   }
   await program.parseAsync(process.argv);
 } catch (error) {

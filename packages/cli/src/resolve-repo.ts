@@ -1,3 +1,4 @@
+import { telemetry } from "./telemetry";
 import { resolveGitRoot } from "./resolve-git-root";
 import { resolveRoots } from "./resolve-roots";
 
@@ -21,18 +22,26 @@ export async function resolveRepo({
   roots: string[];
   repo: string;
 }): Promise<Workspace> {
-  if (!roots.length || !repo.trim()) {
-    throw new Error(
-      "Provide roots with every workspace Git root and repo with the active Git root.",
-    );
-  }
-  const folders = await resolveRoots({ roots });
-  const path = await resolveGitRoot(repo);
-  // Both sides are canonical paths, so aliases of the same repo compare equally.
-  if (!folders.includes(path)) {
-    throw new Error(
-      "Include repo in the workspace roots, then retry with repo set to one of those Git roots.",
-    );
-  }
-  return { roots: folders, repo: path };
+  return telemetry.stage({
+    name: "resolve_repo",
+    run: async () => {
+      if (!roots.length || !repo.trim()) {
+        throw new Error(
+          "Provide roots with every workspace Git root and repo with the active Git root.",
+        );
+      }
+      const folders = await resolveRoots({ roots });
+      telemetry.set({ root_count: folders.length });
+      const path = await resolveGitRoot(repo);
+      // Both sides are canonical paths, so aliases of the same repo compare equally.
+      if (!folders.includes(path)) {
+        throw new Error(
+          "Include repo in the workspace roots, then retry with repo set to one of those Git roots.",
+        );
+      }
+      // Attribute shared-workspace searches to the active repo, not every workspace root.
+      await telemetry.setProject({ repo: path });
+      return { roots: folders, repo: path };
+    },
+  });
 }

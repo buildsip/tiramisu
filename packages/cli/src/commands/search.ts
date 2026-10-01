@@ -1,3 +1,4 @@
+import { telemetry } from "../telemetry";
 import { loadScopedWorkspaceMemories } from "../load-scoped-workspace-memories";
 import type { Command } from "commander";
 import { dirname, relative } from "node:path";
@@ -31,38 +32,48 @@ export async function search({
   if (!Number.isSafeInteger(limit) || limit < 1 || !Number.isSafeInteger(offset) || offset < 0)
     throw new Error("limit must be a positive integer and offset a nonnegative integer.");
   const { memories: unique } = await loadScopedWorkspaceMemories({ roots, repo, scope });
-  // Rebuild the index when the selected files or their filesystem metadata change.
-  const stamp = JSON.stringify(unique.map((memory) => [memory.path, memory.stamp]));
-  if (cached?.stamp !== stamp) {
-    const index = new MiniSearch({
-      idField: "path",
-      fields: ["title", "tags", "frontmatter", "body"],
-      searchOptions: { boost: { title: 3, tags: 2 } },
-    });
-    index.addAll(
-      unique.map((memory) => ({
-        path: memory.path,
-        title: memory.frontmatter.title,
-        tags: relative(memory.project, memory.path),
-        frontmatter: JSON.stringify(memory.frontmatter),
-        body: memory.body,
-      })),
-    );
-    cached = { stamp, index };
-  }
-  const byPath = new Map(unique.map((memory) => [memory.path, memory]));
-  return cached.index
-    .search(query)
-    .slice(offset, offset + limit)
-    .map(({ id, score }) => {
-      const memory = byPath.get(String(id))!;
+  telemetry.set({ searchable_count: unique.length, offset });
+  const { index, byPath } = telemetry.measureSync({
+    name: "index",
+    run: () => {
+      // Rebuild the index when the selected files or their filesystem metadata change.
+      const stamp = JSON.stringify(unique.map((memory) => [memory.path, memory.stamp]));
+      telemetry.set({ index_reused: cached?.stamp === stamp });
+      if (cached?.stamp !== stamp) {
+        const index = new MiniSearch({
+          idField: "path",
+          fields: ["title", "tags", "frontmatter", "body"],
+          searchOptions: { boost: { title: 3, tags: 2 } },
+        });
+        index.addAll(
+          unique.map((memory) => ({
+            path: memory.path,
+            title: memory.frontmatter.title,
+            tags: relative(memory.project, memory.path),
+            frontmatter: JSON.stringify(memory.frontmatter),
+            body: memory.body,
+          })),
+        );
+        cached = { stamp, index };
+      }
       return {
-        path: dirname(memory.path),
-        score,
-        frontmatter: memory.frontmatter,
-        body: memory.body,
+        index: cached.index,
+        byPath: new Map(unique.map((memory) => [memory.path, memory])),
       };
-    });
+    },
+  });
+  const matches = telemetry.measureSync({ name: "query", run: () => index.search(query) });
+  const result = matches.slice(offset, offset + limit).map(({ id, score }) => {
+    const memory = byPath.get(String(id))!;
+    return {
+      path: dirname(memory.path),
+      score,
+      frontmatter: memory.frontmatter,
+      body: memory.body,
+    };
+  });
+  telemetry.set({ match_count: matches.length, result_count: result.length });
+  return result;
 }
 
 export function registerSearchCommand({ program }: { program: Command }) {
@@ -90,12 +101,17 @@ export function registerSearchCommand({ program }: { program: Command }) {
         limit: string;
         offset: string;
       }) => {
-        const result = await search({
-          ...options,
-          limit: Number(options.limit),
-          offset: Number(options.offset),
+        return telemetry.run({
+          tool: "search-memories",
+          run: async () => {
+            const result = await search({
+              ...options,
+              limit: Number(options.limit),
+              offset: Number(options.offset),
+            });
+            process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+          },
         });
-        process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       },
     );
 }

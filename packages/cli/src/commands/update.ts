@@ -1,3 +1,5 @@
+import { recordToolCounts } from "../record-tool-counts";
+import { telemetry } from "../telemetry";
 import { isInside } from "@buildsip/file-utils";
 import type { Command } from "commander";
 import { dirname } from "node:path";
@@ -16,6 +18,7 @@ import { saveMemory } from "../save-memory";
 import { readPruneConfig } from "../read-prune-config";
 import { recordUpvotes } from "../record-upvotes";
 import { NAMES } from "../names";
+import { PermissionDeniedError } from "../permission-denied-error";
 
 /**
  * Updates only supplied fields on an existing memory; id and created never change.
@@ -48,7 +51,7 @@ export async function update({
     );
   }
   if (existing.frontmatter.doNotEdit) {
-    throw new Error(
+    throw new PermissionDeniedError(
       `You cannot edit this memory because doNotEdit is true: ${dirname(existing.path)}. Ask the user to edit it.`,
     );
   }
@@ -96,6 +99,8 @@ export async function update({
     body: input.body === undefined ? existing.body : `${input.body.replace(/\s*$/, "")}\n`,
     existing,
   });
+  // Saving can succeed even if the follow-up database vote fails.
+  telemetry.set({ affected_count: saved.length });
   if (prune) {
     try {
       await recordUpvotes({
@@ -129,18 +134,24 @@ export function registerUpdateCommand({ program }: { program: Command }) {
     )
     .option("--input <file>", "Read one memory JSON object from a file; omit or use - for stdin.")
     .action(async (options: { roots: string[]; repo: string; path: string; input?: string }) => {
-      const value = await readJsonInput({
-        file: options.input,
-        label: "update",
-        example: '{"body":"Updated content"}',
+      return telemetry.run({
+        tool: "update-memory",
+        run: async () => {
+          const value = await readJsonInput({
+            file: options.input,
+            label: "update",
+            example: '{"body":"Updated content"}',
+          });
+          const input = parseValue({ schema: updateSchema, value, label: "update input" });
+          const result = await update({
+            ...input,
+            roots: options.roots,
+            repo: options.repo,
+            path: options.path,
+          });
+          recordToolCounts({ name: "update-memory", result });
+          process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+        },
       });
-      const input = parseValue({ schema: updateSchema, value, label: "update input" });
-      const result = await update({
-        ...input,
-        roots: options.roots,
-        repo: options.repo,
-        path: options.path,
-      });
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     });
 }

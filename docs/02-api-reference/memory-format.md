@@ -30,7 +30,7 @@ The id is used to track the memory across renames, and for upvotes when those ar
 
 ### created
 
-Required. UTC calendar date when the memory was inserted (`YYYY-MM-DD`). Don't change it. [Pruning](../01-introduction/06-upvotes-and-pruning.md) uses this date for the unvoted lifetime.
+Required. UTC calendar date when the memory was inserted (`YYYY-MM-DD`). Don't change it. [Pruning](../01-introduction/05-upvotes-and-pruning.md) uses this date for the unvoted lifetime.
 
 ### title
 
@@ -94,10 +94,10 @@ id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0
 created: 2026-09-19
 title: Axios retry duplication after reconnect
 
-anchors:
-  - packages/api/src/websocket.ts
 linear: https://linear.app/acme/issue/ACM-86/axios-reconnect-issue
-sentry: https://sentry.io/organizations/acme/issues/12345/
+sentry:
+- https://sentry.io/organizations/acme/issues/12345/
+- https://sentry.io/organizations/acme/issues/67890/
 retireWhen: Zero occurrences in Sentry for 60 days
 ---
 
