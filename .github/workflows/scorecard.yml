@@ -13,44 +13,15 @@ on:
     - cron: '31 13 * * 2'
   push:
     branches: [ "main" ]
-  workflow_dispatch:
-
-concurrency:
-  group: scorecard-${{ github.ref }}
-  cancel-in-progress: true
 
 # Declare default permissions as read only.
 permissions: read-all
 
 jobs:
-  wait:
-    name: Wait for CI and CodeQL
-    if: github.event.repository.default_branch == github.ref_name
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    permissions:
-      contents: read
-      actions: read
-      pull-requests: read
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      # Scorecard checks merged PR heads, so wait for those checks as well as main.
-      - name: Wait for completed checks
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          CHECK_SHA: ${{ github.sha }}
-        run: node scripts/wait-for-checks.mjs
-
   analysis:
     name: Scorecard analysis
-    needs: wait
     runs-on: ubuntu-latest
-    # Keep the publishing job limited to Scorecard's approved actions.
+    # publish_results only succeeds from the default branch. This workflow has no pull_request trigger.
     if: github.event.repository.default_branch == github.ref_name
     permissions:
       # Needed to upload the results to code-scanning dashboard.
