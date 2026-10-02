@@ -10,6 +10,7 @@
   "main": "index.js",
   "scripts": {
     "release": "bun scripts/release.mjs",
+    "audit": "bun audit",
     "lint": "oxlint --report-unused-disable-directives",
     "lint:fix": "oxlint --fix --fix-suggestions",
     "format": "oxfmt --write \"**/*.{ts,tsx,mjs,md}\"",

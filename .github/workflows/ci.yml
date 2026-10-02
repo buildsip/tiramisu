@@ -79,6 +79,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Audit every workspace, including CLI dependencies and docs development tools.
+      # Stable Drizzle Kit still includes an old esbuild loader. We do not use its dev server.
+      - name: Audit dependencies
+        run: bun run audit --ignore GHSA-67mh-4wv8-2f99
+
       # Docs have their own lint step in PR checks and main deployments.
       # Keep this exclusion in CI so local root lint still checks the whole repo.
       - name: Lint
