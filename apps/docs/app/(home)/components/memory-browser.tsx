@@ -98,10 +98,10 @@ type Entry = {
 // Keep complete classes here so Tailwind can discover every indentation level.
 const depths = ["pl-2", "pl-6", "pl-10", "pl-14", "pl-18", "pl-22"];
 const row =
-  "group flex min-h-8 w-full items-center gap-2 rounded border border-transparent py-1 pr-2 text-xs leading-5 whitespace-nowrap text-neutral-400";
+  "group flex min-h-8 w-full items-center gap-2 rounded border border-transparent py-1 pr-2 text-sm leading-5 whitespace-nowrap text-neutral-400";
 // Label the boundaries without relying on language-specific manifest filenames.
 const badge =
-  "shrink-0 rounded border border-neutral-700 bg-neutral-900 px-1.5 py-0.5 font-sans text-[10px] leading-3 text-neutral-400";
+  "shrink-0 rounded border border-neutral-700 bg-neutral-900 px-1.5 py-0.5 font-sans text-xs leading-3 text-neutral-400";
 const entries: Entry[] = [
   { name: ".memories", depth: 0, kind: "folder" },
   { name: "generate-types-from-the-spec", depth: 1, kind: "folder" },
@@ -148,10 +148,10 @@ export function MemoryBrowser() {
   const frontmatterEnd = lines.indexOf("---", 1);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-700 bg-neutral-950 text-left font-mono shadow-2xl ring-4 ring-white/5">
+    <div className="overflow-hidden rounded-xl border border-neutral-700 bg-neutral-950 text-left shadow-2xl ring-4 ring-white/5">
       <div className="grid lg:grid-cols-3">
         <div className="min-w-0 border-b border-neutral-800 bg-neutral-950 py-4 lg:border-r lg:border-b-0">
-          <div className="flex items-center gap-2 px-4 pb-3 text-xs text-neutral-200">
+          <div className="flex items-center gap-2 px-4 pb-3 text-sm text-neutral-200">
             <span>acme-app</span>
             <span className={badge}>monorepo</span>
           </div>
@@ -164,7 +164,7 @@ export function MemoryBrowser() {
                   {entry.label && <span className={badge}>{entry.label}</span>}
                   {entry.file && (
                     <span
-                      className="ml-auto flex items-center gap-1 pl-1 text-xs text-neutral-500 group-hover:text-white group-focus-visible:text-white"
+                      className="ml-auto flex items-center gap-1 pl-1 text-sm text-neutral-500 group-hover:text-white group-focus-visible:text-white"
                       aria-hidden
                     >
                       {entry.file === selected ? "" : "Open"}
@@ -207,7 +207,7 @@ export function MemoryBrowser() {
           role="region"
           aria-label={`Preview of ${file.path}`}
         >
-          <div className="flex h-11 shrink-0 items-stretch border-b border-neutral-800 text-xs text-neutral-400">
+          <div className="flex h-11 shrink-0 items-stretch border-b border-neutral-800 text-sm text-neutral-400">
             <span className="-mt-px flex items-center gap-2 border-t border-t-neutral-200 border-r border-r-neutral-800 px-4 text-neutral-200">
               <FileIcon kind={kind} className="size-3.5" />
               {name}
@@ -226,7 +226,8 @@ export function MemoryBrowser() {
                 />
               </div>
             ) : (
-              <pre className="m-0 min-h-full py-4 pr-4 text-xs leading-6 whitespace-pre-wrap text-neutral-300">
+              /* File names use the page face. Only the memory body stays monospaced. */
+              <pre className="m-0 min-h-full py-4 pr-4 font-mono text-xs leading-6 whitespace-pre-wrap text-neutral-300">
                 <code>
                   {lines.map((line, index) => (
                     <span className="flex" key={`${selected}-${index}`}>
