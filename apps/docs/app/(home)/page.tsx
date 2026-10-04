@@ -25,7 +25,7 @@ const card = cn(
   // Between phone and desktop sizes, the third illustrated card spans both columns.
   "sm:max-lg:nth-3:col-span-full sm:max-lg:nth-3:grid sm:max-lg:nth-3:grid-cols-2 sm:max-lg:nth-3:items-center sm:max-lg:nth-3:[&_[data-illustration]]:col-start-1 sm:max-lg:nth-3:[&_[data-illustration]]:row-span-2 sm:max-lg:nth-3:[&_[data-illustration]]:row-start-1 sm:max-lg:nth-3:[&_[data-illustration]]:h-full sm:max-lg:nth-3:[&_[data-illustration]]:min-h-60 sm:max-lg:nth-3:[&>h3]:col-start-2 sm:max-lg:nth-3:[&>h3]:row-start-1 sm:max-lg:nth-3:[&>h3]:self-end sm:max-lg:nth-3:[&>div>p]:col-start-2 sm:max-lg:nth-3:[&>div>p]:row-start-2 sm:max-lg:nth-3:[&>div>p]:self-start",
 );
-const footerLink = "flex items-center gap-2 text-xs text-neutral-500";
+const footerLink = "flex items-center gap-2 text-sm text-neutral-500";
 
 /** Render the homepage; interactive sections manage their own client state. */
 export default function HomePage() {
@@ -114,7 +114,7 @@ export default function HomePage() {
         </Link>
       </section>
 
-      <footer className="border-t border-neutral-800 px-5 sm:px-8 pt-16 pb-6 [&_a:hover]:text-white max-sm:px-6 max-sm:pt-10 max-sm:pb-6">
+      <footer className="border-t border-neutral-800 px-5 pt-16 pb-16 sm:px-8 [&_a:hover]:text-white max-sm:px-6 max-sm:pt-10 max-sm:pb-10">
         <div className="mx-auto flex max-w-7xl justify-between gap-16 max-sm:flex-col max-sm:gap-10">
           <div>
             <Link
@@ -127,7 +127,7 @@ export default function HomePage() {
           </div>
           <nav
             aria-label="Footer"
-            className="flex gap-28 pr-18 max-xl:pr-0 max-lg:gap-16 max-sm:gap-20 [&>div]:flex [&>div]:flex-col [&>div]:items-start [&>div]:gap-3 [&_span]:mb-1 [&_span]:text-xs"
+            className="flex gap-28 pr-18 max-xl:pr-0 max-lg:gap-16 max-sm:gap-20 [&>div]:flex [&>div]:flex-col [&>div]:items-start [&>div]:gap-3 [&_span]:mb-1 [&_span]:text-sm"
           >
             <div>
               <span>Product</span>
@@ -144,13 +144,13 @@ export default function HomePage() {
             <div>
               <span>Community</span>
               <a href={github} className={footerLink}>
-                <RiGithubFill size={15} aria-hidden /> GitHub
+                <RiGithubFill size={18} aria-hidden /> GitHub
               </a>
               <a href={discord} className={footerLink}>
-                <RiDiscordFill size={15} aria-hidden /> Discord
+                <RiDiscordFill size={18} aria-hidden /> Discord
               </a>
               <a href={`${github}/issues`} className={footerLink}>
-                Feedback <ArrowUpRight size={12} aria-hidden />
+                Feedback <ArrowUpRight size={14} aria-hidden />
               </a>
             </div>
           </nav>

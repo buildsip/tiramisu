@@ -2,7 +2,7 @@ import { Search, Check, Clock3, Trash2 } from "lucide-react";
 import { FileIcon } from "./file-icon";
 import { cn } from "@/lib/cn";
 
-const art = "relative isolate h-60 overflow-hidden bg-transparent font-mono";
+const art = "relative isolate h-60 overflow-hidden bg-transparent";
 
 /**
  * Dotted grid behind each drawing.
@@ -28,7 +28,7 @@ function IllustrationGrid() {
 }
 const ghost = "flex h-7 items-center gap-2.5 px-5 py-1 text-neutral-500 opacity-50";
 const note =
-  "flex items-center gap-2.5 rounded-md border border-neutral-700 bg-[linear-gradient(130deg,#202020,#0b0b0b)] px-3.5 py-3 text-[11px] text-neutral-500 [&>svg:last-child]:ml-auto";
+  "flex items-center gap-2.5 rounded-md border border-neutral-700 bg-[linear-gradient(130deg,#202020,#0b0b0b)] px-3.5 py-3 text-xs text-neutral-500 [&>svg:last-child]:ml-auto";
 const node =
   "absolute z-10 flex h-8 w-28 items-center justify-center gap-2 rounded-md border bg-neutral-950 text-xs";
 /** In-scope nodes use the kept memory from the pruning diagram: same border, fill, and icon color. */
