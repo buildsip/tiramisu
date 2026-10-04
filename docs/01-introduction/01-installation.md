@@ -4,7 +4,7 @@ description: Getting Started with Tiramisu
 icon: Rocket
 ---
 
-**Tiramisu is an [open source](https://github.com/buildsip/tiramisu) git-native memory system for AI coding agents.**
+**Tiramisu is an [open source](https://github.com/buildsip/tiramisu) git-native memory system for coding agents.**
 
 ## Quick Start
 
