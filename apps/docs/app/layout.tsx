@@ -1,13 +1,21 @@
 import { RootProvider } from "fumadocs-ui/provider/next";
 import "./global.css";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
 import Script from "next/script";
 import { siteUrl } from "@/lib/shared";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+// Next has no fallback metrics for Geist Pixel, so use an unadjusted monospace fallback.
+const geistPixel = Geist_Pixel({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-geist-pixel",
+  adjustFontFallback: false,
+  fallback: ["monospace"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -15,7 +23,7 @@ export const metadata: Metadata = {
     default: "Tiramisu",
     template: "%s | Tiramisu",
   },
-  description: "Git-native memory for AI coding agents.",
+  description: "Coding agent memory in Git",
   icons: {
     icon: "/logo.ico",
   },
@@ -25,10 +33,15 @@ export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={cn(geist.variable, geistMono.variable, "font-sans")}
+      className={cn(
+        geist.variable,
+        geistMono.variable,
+        geistPixel.variable,
+        "overscroll-none bg-black font-sans",
+      )}
       suppressHydrationWarning
     >
-      <body className="flex flex-col min-h-screen">
+      <body className="flex min-h-screen flex-col overscroll-none">
         <RootProvider>{children}</RootProvider>
         {process.env.NEXT_PUBLIC_ENV === "production" ? (
           <Script

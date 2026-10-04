@@ -4,7 +4,7 @@ description: Introducing Tiramisu, a git-native agent memory system.
 icon: CircleQuestionMark
 ---
 
-**Tiramisu is a git-native memory system for AI coding agents.** It provides a set of [MCP tools](../02-api-reference/mcp.md) that store and manage **curated context** as **Markdown** files inside your repositories. Tiramisu keeps agent knowledge atomic, version-controlled, and reviewable in pull requests.
+**Tiramisu is a git-native memory system for coding agents.** It provides a set of [MCP tools](../02-api-reference/mcp.md) that store and manage **curated context** as **Markdown** files inside your repositories. Tiramisu keeps agent knowledge atomic, version-controlled, and reviewable in pull requests.
 
 ![workspace structure](../assets/file-tree.svg)
 

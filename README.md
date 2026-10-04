@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>
-    Git-native memory for AI coding agents.
+    Coding agent memory in Git
   </b>
 </p>
 

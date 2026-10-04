@@ -15,10 +15,21 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
+/* Two identical logo groups make the Tailwind marquee utility loop seamlessly. */
+@theme {
+  --animate-scroll-logos: scroll-logos 50s linear infinite;
+
+  @keyframes scroll-logos {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
+
 @theme inline {
   --font-heading: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-pixel: var(--font-geist-pixel), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -157,19 +168,6 @@ html > body[data-scroll-locked] {
   samp {
     font-family: var(--font-mono);
   }
-}
-
-/* Home navbar only. It sits on the black animation.
-   Docs pages do not render #nd-home-layout, so their navbar stays on the theme color.
-   Text color is set here so the links stay light when the rest of the site is light. */
-#nd-home-layout > #nd-nav,
-#nd-home-layout > #nd-nav > :first-child {
-  background-color: #000;
-  color: #fff;
-}
-
-#nd-home-layout > #nd-nav :is(a, button, svg) {
-  color: #fff;
 }
 
 /* Fumadocs prose links use the body color. Keep headings as they are. */
