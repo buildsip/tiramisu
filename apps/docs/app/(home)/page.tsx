@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NoPrefetchLink } from "@/components/no-prefetch-link";
 import Image from "next/image";
 import { ArrowUpRight, BookOpen } from "lucide-react";
 import { RiDiscordFill, RiGithubFill } from "@remixicon/react";
@@ -51,7 +51,7 @@ export default function HomePage() {
               </p>
             </Card>
           ))}
-          <Link
+          <NoPrefetchLink
             href={docsRoute}
             className="flex flex-col justify-between gap-5 rounded-xl border border-neutral-800 bg-[radial-gradient(ellipse_at_top_right,#171717,#040404_65%)] p-6 text-neutral-400 transition-colors duration-200 hover:border-neutral-600 max-sm:min-h-32"
           >
@@ -59,7 +59,7 @@ export default function HomePage() {
             <span className="flex items-center justify-between text-sm text-neutral-100">
               Explore the docs <ArrowUpRight size={18} aria-hidden />
             </span>
-          </Link>
+          </NoPrefetchLink>
         </div>
       </section>
 
@@ -106,24 +106,24 @@ export default function HomePage() {
         <h2 id="get-started-title" className={title}>
           Build anything, remember what matters
         </h2>
-        <Link
+        <NoPrefetchLink
           href={docsRoute}
           className="mt-8 inline-flex min-h-11 items-center justify-center rounded-md bg-neutral-100 px-6 text-sm font-medium text-neutral-950 transition-colors hover:bg-white"
         >
           Get started
-        </Link>
+        </NoPrefetchLink>
       </section>
 
       <footer className="border-t border-neutral-800 px-5 pt-16 pb-16 sm:px-8 [&_a:hover]:text-white max-sm:px-6 max-sm:pt-10 max-sm:pb-10">
         <div className="mx-auto flex max-w-7xl justify-between gap-16 max-sm:flex-col max-sm:gap-10">
           <div>
-            <Link
+            <NoPrefetchLink
               className="flex items-center gap-2 text-2xl font-medium tracking-tight"
               href="/"
               aria-label="Tiramisu home"
             >
               <Image src="/logo.svg" width={32} height={32} alt="" /> Tiramisu
-            </Link>
+            </NoPrefetchLink>
           </div>
           <nav
             aria-label="Footer"
@@ -131,15 +131,15 @@ export default function HomePage() {
           >
             <div>
               <span>Product</span>
-              <Link href="#features" className={footerLink}>
+              <NoPrefetchLink href="#features" className={footerLink}>
                 Features
-              </Link>
-              <Link href="#why-git" className={footerLink}>
+              </NoPrefetchLink>
+              <NoPrefetchLink href="#why-git" className={footerLink}>
                 Why Git?
-              </Link>
-              <Link href={docsRoute} className={footerLink}>
+              </NoPrefetchLink>
+              <NoPrefetchLink href={docsRoute} className={footerLink}>
                 Documentation
-              </Link>
+              </NoPrefetchLink>
             </div>
             <div>
               <span>Community</span>
