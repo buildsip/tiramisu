@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { NoPrefetchLink } from "@/components/no-prefetch-link";
 import { docsRoute } from "@/lib/shared";
 import { MemoryBrowser } from "./memory-browser";
 import { PixelSky } from "./pixel-sky";
@@ -25,12 +25,12 @@ export function LandingHero() {
             <span className="font-medium text-neutral-100">memories as Markdown files</span> inside
             your repository. Use lightweight MCP tools to search and manage memories.
           </p>
-          <Link
+          <NoPrefetchLink
             href={docsRoute}
             className="mt-8 inline-flex min-h-11 items-center justify-center rounded-md bg-neutral-100 px-6 text-sm font-medium text-neutral-950 transition-colors hover:bg-white"
           >
             Get started
-          </Link>
+          </NoPrefetchLink>
         </div>
       </div>
 

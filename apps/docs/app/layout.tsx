@@ -1,4 +1,4 @@
-import { RootProvider } from "fumadocs-ui/provider/next";
+import { DocsProvider } from "@/components/docs-provider";
 import "./global.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Geist_Pixel } from "next/font/google";
@@ -42,7 +42,7 @@ export default function Layout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col overscroll-none">
-        <RootProvider>{children}</RootProvider>
+        <DocsProvider>{children}</DocsProvider>
         {process.env.NEXT_PUBLIC_ENV === "production" ? (
           <Script
             strategy="afterInteractive"

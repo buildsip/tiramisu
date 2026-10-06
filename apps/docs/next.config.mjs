@@ -12,14 +12,4 @@ export default withMDX({
   // Include shared dependencies and ../../docs. OpenNext uses the same root lockfile
   // to locate this app within the standalone build.
   outputFileTracingRoot: fileURLToPath(new URL("../..", import.meta.url)),
-  // Keep existing page, markdown, and preview URLs working after the rename.
-  redirects() {
-    return [
-      {
-        source: "/docs/introduction/quick-start",
-        destination: "/docs/introduction/installation",
-        permanent: true,
-      },
-    ];
-  },
 });
