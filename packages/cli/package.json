@@ -1,6 +1,6 @@
 {
   "name": "tiramisu",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Coding agent memory in Git",
   "keywords": [
     "mcp",
