@@ -97,11 +97,20 @@ async function memory({
     roots: [owner],
     repo: owner,
     body: "Useful knowledge",
-    frontmatter: { title, scope, doNotDelete: protectedMemory },
+    frontmatter: {
+      description: "A memory description.",
+      title,
+      scope,
+      doNotDelete: protectedMemory,
+    },
   });
   spyOn(Date, "now").mockReturnValue(now);
   const stored = await readMemory({ path: join(path!, "memory.md"), project: owner, repo: owner });
-  return { path: path!, id: stored.frontmatter.id };
+  return {
+    path: path!,
+    id: stored.frontmatter.id,
+    summary: { path: path!, title, description: "A memory description." },
+  };
 }
 
 async function vote({ id, actor, at }: { id: string; actor: "human" | "agent"; at: number }) {
@@ -125,7 +134,9 @@ it("uses the maximum lifetime and the latest vote for each actor, including exac
   await vote({ id: repeated.id, actor: "human", at: now - 181 * day });
   const young = await memory({ title: "Young", at: now - 89 * day });
   await vote({ id: young.id, actor: "agent", at: now - 100 * day });
-  expect(await prune({ repo })).toEqual([expired.path, repeated.path].sort());
+  expect(await prune({ repo })).toEqual(
+    [expired.summary, repeated.summary].sort((a, b) => a.path.localeCompare(b.path)),
+  );
   expect(existsSync(expired.path)).toBe(true);
   // Config durations are applied at read time, without rewriting stored votes.
   await configure({ repo, settings: { unvotedTtl: "400d" } });
@@ -136,20 +147,20 @@ it("expires from the stored created date, not Git history", async () => {
   const fresh = await memory({ at: now });
   expect(await prune({ repo })).toEqual([]);
   const expired = await memory({ title: "Expired uncommitted" });
-  expect(await prune({ repo })).toEqual([expired.path]);
+  expect(await prune({ repo })).toEqual([expired.summary]);
   await writeFile(
     join(expired.path, "memory.md"),
     (await readFile(join(expired.path, "memory.md"), "utf8")) + "\nEdited today\n",
   );
-  expect(await prune({ repo })).toEqual([expired.path]);
-  expect(await prune({ repo })).not.toContain(fresh.path);
+  expect(await prune({ repo })).toEqual([expired.summary]);
+  expect(await prune({ repo })).not.toContainEqual(fresh.summary);
 });
 
 it("keeps created across folder moves", async () => {
   const entry = await memory({ title: "Original" });
   const path = join(repo, ".memories/renamed");
   await rename(entry.path, path);
-  expect(await prune({ repo })).toEqual([path]);
+  expect(await prune({ repo })).toEqual([{ ...entry.summary, path }]);
   const stored = await readMemory({
     path: join(path, "memory.md"),
     project: repo,
@@ -172,8 +183,10 @@ it("prunes only the selected repo, including its package stores", async () => {
   const shared = await memory({ owner: team });
   const hidden = await makeRepo("private");
   await memory({ owner: hidden });
-  expect(await prune({ repo })).toEqual([local.path, packaged.path, rust.path].sort());
-  expect(await prune({ repo: team })).toEqual([shared.path]);
+  expect(await prune({ repo })).toEqual(
+    [local.summary, packaged.summary, rust.summary].sort((a, b) => a.path.localeCompare(b.path)),
+  );
+  expect(await prune({ repo: team })).toEqual([shared.summary]);
   await configure({ repo, enabled: false });
   await expect(prune({ repo })).rejects.toThrow("Pruning is disabled");
 });
@@ -183,6 +196,14 @@ it("requires an absolute Git root for prune", async () => {
   const child = join(repo, "packages/web");
   await mkdir(child, { recursive: true });
   await expect(prune({ repo: child })).rejects.toThrow("Git root");
+});
+
+it("rejects a prune candidate without a description", async () => {
+  const entry = await memory();
+  const path = join(entry.path, "memory.md");
+  const source = await readFile(path, "utf8");
+  await writeFile(path, source.replace(/^description:.*\n/m, ""));
+  await expect(prune({ repo })).rejects.toThrow("frontmatter.description");
 });
 
 it.each([false, true])(
@@ -329,7 +350,7 @@ it("records agent votes for renamed, package-moved, and empty updates, and skips
     roots: [repo],
     repo,
     path: entry.path,
-    frontmatter: { title: "New title", scope: ["web"] },
+    frontmatter: { description: "A memory description.", title: "New title", scope: ["web"] },
   });
   await update({ roots: [repo], repo, path: moved! });
   expect((await client.query("SELECT memory_id, actor FROM tiramisu.upvotes")).rows).toEqual([
@@ -351,7 +372,7 @@ it("reports a saved update path when the database fails and never migrates impli
     roots: [repo],
     repo,
     path: entry.path,
-    frontmatter: { title: "Renamed", doNotEdit: true },
+    frontmatter: { description: "A memory description.", title: "Renamed", doNotEdit: true },
   });
   await expect(result).rejects.toThrow(`memory was saved at ${moved}`);
   await expect(result).rejects.toThrow("Run tiramisu init");
@@ -381,7 +402,7 @@ it("uses only the selected repo's database and reports its failures", async () =
     shared: true,
     settings: { databaseUrlCommand: "printf 'SECRET'; exit 1" },
   });
-  expect(await prune({ repo })).toEqual([local.path]);
+  expect(await prune({ repo })).toEqual([local.summary]);
   const result = prune({ repo: team });
   await expect(result).rejects.toThrow("The command you entered failed");
   await expect(result).rejects.not.toThrow("SECRET");
@@ -403,14 +424,14 @@ it("runs upvote and prune through CLI JSON and MCP contracts", async () => {
     });
   const listed = run(["prune", "--repo", repo]);
   expect(listed.status, listed.stderr).toBe(0);
-  expect(JSON.parse(listed.stdout)).toEqual([entry.path]);
+  expect(JSON.parse(listed.stdout)).toEqual([entry.summary]);
   const tool = mcpTools.find((tool) => tool.name === "prune-memories")!;
   const candidates = await tool.call({ repo });
   expect(candidates.content).toEqual([
-    { type: "text", text: JSON.stringify([entry.path], null, 2) },
+    { type: "text", text: JSON.stringify([entry.summary], null, 2) },
     {
       type: "text",
-      text: "Read the candidates, check their relevance against the code, and suggest which to delete or keep.",
+      text: "Read memory.md inside each candidate's directory path, check its relevance against the code, and suggest which to delete or keep.",
     },
   ]);
   const voted = run(["upvote", "--paths", entry.path, skipped.path, "--actor", "human"]);

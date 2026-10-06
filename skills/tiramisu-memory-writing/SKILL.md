@@ -10,3 +10,4 @@ description: Memory writing guidelines. Write or revise Tiramisu memory titles a
 - You could include: benchmarks, basic usage examples, a reference section with tables and bullet lists, nested headings for variants, "Good to know:" callouts, optional caveats, a separate Examples section with subheadings, prop tables, code blocks with language tags, inline comments, links to related memories, code, or documentation from the project rather than repeating information, external links.
 - Favor short factual sentences.
 - For decisions, describe the alternatives considered and why they failed.
+- Understanding the triggering mechanism for when a memory is read: when the agent searches memories by calling the `search-memories` tool, the results list `path` + `title` + `description`. The agent decides whether to consult a memory based on that `description`.

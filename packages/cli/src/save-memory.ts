@@ -28,6 +28,11 @@ export async function saveMemory({
 }) {
   const { config } = await readConfig(repo);
   validateFrontmatter({ value: frontmatter, config, path: project });
+  // Replace description line breaks with spaces so adjacent words stay separate.
+  const header = {
+    ...frontmatter,
+    description: frontmatter.description.replace(/\s*[\r\n\u2028\u2029]+\s*/gu, " ").trim(),
+  };
   // Split accents from letters, then turn punctuation and spaces into folder-safe hyphens.
   const slug = frontmatter.title
     .trim()
@@ -69,9 +74,12 @@ export async function saveMemory({
   let moved = false;
   let created = false;
   try {
-    await writeFile(join(stage, NAMES.MEMORY_MD), `---\n${stringify(frontmatter)}---\n\n${body}`, {
-      flag: "wx",
-    });
+    // Disable automatic YAML wrapping so long descriptions stay on one line.
+    await writeFile(
+      join(stage, NAMES.MEMORY_MD),
+      `---\n${stringify(header, { lineWidth: 0 })}---\n\n${body}`,
+      { flag: "wx" },
+    );
     if (existing) {
       // Move the entire folder so attachments stay with the memory when its title or scope changes.
       if (path !== existing.path) {

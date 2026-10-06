@@ -57,7 +57,7 @@ export function registerInsertCommand({ program }: { program: Command }) {
     )
     .requiredOption("--repo <path>", "Git root of the workspace project the agent is working on.")
     .description(
-      'Insert one memory from JSON containing body and frontmatter with title and scope. Search first for a related memory to update. Choose the narrowest scope where the memory provides useful context. For example, a login-session cookie rule used throughout authentication applies to ["apps/web/auth"]. Use ["."] only for context useful across the whole repository.',
+      'Insert one memory from JSON containing body and frontmatter with title, description, and scope. Search first for a related memory to update. Choose the narrowest scope where the memory provides useful context. For example, a login-session cookie rule used throughout authentication applies to ["apps/web/auth"]. Use ["."] only for context useful across the whole repository.',
     )
     .option("--input <file>", "Read one memory JSON object from a file; omit or use - for stdin.")
     .action(async (options: { roots: string[]; repo: string; input?: string }) => {
@@ -68,7 +68,7 @@ export function registerInsertCommand({ program }: { program: Command }) {
             file: options.input,
             label: "insert",
             example:
-              '{"body":"Markdown content","frontmatter":{"title":"Memory title","scope":["apps/web/auth"]}}',
+              '{"body":"Markdown content","frontmatter":{"title":"Memory title","description":"A brief description of the memory content.","scope":["apps/web/auth"]}}',
           });
           const input = parseValue({ schema: insertSchema, value, label: "insert input" });
           const result = await insert({ ...input, roots: options.roots, repo: options.repo });

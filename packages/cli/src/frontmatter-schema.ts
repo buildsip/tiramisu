@@ -8,6 +8,13 @@ export const frontmatterSchema = z.looseObject(
       .min(1, "Expected a nonempty string for the memory title.")
       .regex(/\S/, "Expected a nonempty string for the memory title.")
       .describe("Memory title. The memory directory is named after this title."),
+    description: z
+      .string({ error: "Provide a nonblank string briefly describing the memory's content." })
+      .min(1, "Provide a nonblank string briefly describing the memory's content.")
+      .regex(/\S/, "Provide a nonblank string briefly describing the memory's content.")
+      .describe(
+        'A brief description of what the memory is about AND specific contexts for when to read it (this is the primary triggering mechanism). All "when to read" info goes here, not in the body.',
+      ),
     doNotEdit: z
       .boolean({ error: "Expected a boolean: true or false." })
       .optional()
@@ -18,6 +25,7 @@ export const frontmatterSchema = z.looseObject(
       .describe("When true, agents cannot delete this memory."),
   },
   {
-    error: "Expected an object containing memory metadata, such as title and protection flags.",
+    error:
+      "Expected an object containing memory metadata, such as title, description, and protection flags.",
   },
 );

@@ -28,7 +28,7 @@ export const updateSchema = z.strictObject(
   {
     error: (issue) =>
       issue.code === "unrecognized_keys"
-        ? "Remove this unknown field. Only body and frontmatter are allowed at the top level. Pass the memory path via --path and workspace paths via --roots and --repo. Put title, scope, protection flags, and configured custom fields inside frontmatter."
+        ? "Remove this unknown field. Only body and frontmatter are allowed at the top level. Pass the memory path via --path and workspace paths via --roots and --repo. Put title, description, scope, protection flags, and configured custom fields inside frontmatter."
         : 'Expected one JSON object, for example {"body":"Updated content"}. Pass the existing memory path via --path. Omit body or frontmatter fields to keep their current values; use {} for a folder-name repair.',
   },
 );

@@ -19,6 +19,7 @@ Creates one memory.
 | `frontmatter` field                             | Type       | Required                                                                   |
 | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
 | [`title`](./memory-format.md#title)             | `string`   | Yes                                                                        |
+| [`description`](./memory-format.md#description) | `string`   | Yes                                                                        |
 | [`scope`](./memory-format.md#scope)             | `string[]` | Yes.                                                                       |
 | [`doNotEdit`](./memory-format.md#donotedit)     | `boolean`  | No                                                                         |
 | [`doNotDelete`](./memory-format.md#donotdelete) | `boolean`  | No                                                                         |
@@ -32,9 +33,10 @@ Choose the narrowest [scope](./memory-format.md#scope) where the memory provides
 {
   "roots": ["/Users/adam/Desktop/acme/acme-app", "/Users/adam/Desktop/acme/acme-cli"],
   "repo": "/Users/adam/Desktop/acme/acme-app",
-  "body": "Cache responses only after authentication succeeds.",
+  "body": "GET /api/me used the request URL as its cache key before session validation. Anonymous 401 responses could be reused after login...",
   "frontmatter": {
-    "title": "Authenticated response caching",
+    "title": "Profile cache mixed responses across users",
+    "description": "GET /api/me responses are cached by user ID after session validation. Read when changing profile caching, debugging another user's profile appearing, or investigating 401 responses that persist after login.",
     "scope": ["apps/web/auth"]
   }
 }
@@ -55,8 +57,8 @@ Updates an existing memory. Omitted fields retain their values. A path-only call
 {
   "roots": ["/Users/adam/Desktop/acme/acme-app", "/Users/adam/Desktop/acme/acme-cli"],
   "repo": "/Users/adam/Desktop/acme/acme-app",
-  "path": "/Users/adam/Desktop/acme/acme-app/.memories/cache-responses",
-  "body": "Invalidate cached responses when permissions change."
+  "path": "/Users/adam/Desktop/acme/acme-app/apps/web/.memories/profile-cache-mixed-responses-across-users",
+  "body": "GET /api/me used the request URL as its cache key before session validation. Anonymous 401 responses could be reused after login..."
 }
 ```
 
@@ -71,6 +73,7 @@ Updates an existing memory. Omitted fields retain their values. A path-only call
 | `frontmatter` field                             | Type       | Required                                                                   |
 | ----------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
 | [`title`](./memory-format.md#title)             | `string`   | No.                                                                        |
+| [`description`](./memory-format.md#description) | `string`   | No.                                                                        |
 | [`scope`](./memory-format.md#scope)             | `string[]` | No.                                                                        |
 | [`doNotEdit`](./memory-format.md#donotedit)     | `boolean`  | No                                                                         |
 | [`doNotDelete`](./memory-format.md#donotdelete) | `boolean`  | No                                                                         |
@@ -123,6 +126,20 @@ Search reads memories from:
 
 > [!TIP]
 > Upvotes or memory age don't affect search results.
+
+### Results
+
+Returns an array of summaries in relevance order, where elements include the `path` to the memory directory, `title` and `description`:
+
+```json
+[
+  {
+    "path": "/Users/adam/Desktop/acme/acme-app/apps/web/.memories/profile-cache-mixed-responses-across-users",
+    "title": "Profile cache mixed responses across users",
+    "description": "GET /api/me responses are cached by user ID after session validation. Read when changing profile caching, debugging another user's profile appearing, or investigating 401 responses that persist after login."
+  }
+]
+```
 
 ### Search ranking
 
@@ -181,7 +198,7 @@ Upvotes useful memories. Upvotes requested by the user are recorded as `human`. 
 
 Lists expired memories within `repo`, excluding the ones tagged with [`doNotDelete`](./memory-format.md#donotdelete).
 
-When candidates exist, the agent is instructed to read each memory and check its relevance against the code, then suggest which to delete or keep.
+Returns the same [summary fields](#results) as search, sorted by directory path. When candidates exist, the agent is instructed to read `memory.md` inside each directory and check its relevance against the code, then suggest which to delete or keep.
 
 **Example:**
 

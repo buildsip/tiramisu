@@ -47,7 +47,12 @@ if (mode === "SIGINT" || mode === "SIGTERM") {
 `,
   );
   // Bundle the fixture so Node can resolve the SDK even from the temporary directory.
-  const result = await Bun.build({ entrypoints: [entry], outdir: temp, target: "node", format: "esm" });
+  const result = await Bun.build({
+    entrypoints: [entry],
+    outdir: temp,
+    target: "node",
+    format: "esm",
+  });
   if (!result.success) throw new AggregateError(result.logs, "Could not build the PostHog test.");
 });
 

@@ -65,21 +65,24 @@ it("sends first run once and reuses its ID across versions and entry points", as
   });
 });
 
-it.each([false, true])("honors the saved opt-out with development install set to %s", async (dev) => {
-  if (dev) await makeDev();
-  await mkdir(join(home, ".tiramisu"));
-  await writeFile(join(home, ".tiramisu", "telemetry.json"), '{"enabled":false}');
-  await initTelemetry({ cliRoot, version: "test", source: "mcp" });
-  await telemetry.run({ tool: "search-memories", run: async () => {} });
-  expect(start).not.toHaveBeenCalled();
-  expect(events).toEqual([]);
-  expect(JSON.parse(await readFile(join(home, ".tiramisu", "telemetry.json"), "utf8"))).toEqual({
-    enabled: false,
-  });
-  await expect(readFile(join(home, ".tiramisu", "telemetry-debug.jsonl"))).rejects.toMatchObject({
-    code: "ENOENT",
-  });
-});
+it.each([false, true])(
+  "honors the saved opt-out with development install set to %s",
+  async (dev) => {
+    if (dev) await makeDev();
+    await mkdir(join(home, ".tiramisu"));
+    await writeFile(join(home, ".tiramisu", "telemetry.json"), '{"enabled":false}');
+    await initTelemetry({ cliRoot, version: "test", source: "mcp" });
+    await telemetry.run({ tool: "search-memories", run: async () => {} });
+    expect(start).not.toHaveBeenCalled();
+    expect(events).toEqual([]);
+    expect(JSON.parse(await readFile(join(home, ".tiramisu", "telemetry.json"), "utf8"))).toEqual({
+      enabled: false,
+    });
+    await expect(readFile(join(home, ".tiramisu", "telemetry-debug.jsonl"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  },
+);
 
 it("appends sanitized development events across startups without initializing PostHog", async () => {
   await makeDev();
@@ -131,9 +134,9 @@ it("keeps development log failures from breaking commands or enabling network de
   await makeDev();
   await mkdir(join(home, ".tiramisu", "telemetry-debug.jsonl"), { recursive: true });
   await initTelemetry({ cliRoot, version: "test", source: "cli" });
-  await expect(
-    telemetry.run({ tool: "search-memories", run: async () => "result" }),
-  ).resolves.toBe("result");
+  await expect(telemetry.run({ tool: "search-memories", run: async () => "result" })).resolves.toBe(
+    "result",
+  );
   expect(start).not.toHaveBeenCalled();
   expect(events).toEqual([]);
 });

@@ -15,6 +15,7 @@ const memories = {
 id: 8ef26da2-2158-49a3-9c6f-52914ca3c651
 created: 2026-09-17
 title: Generate types from the spec
+description: Orval replaced hand-written API types; HTTP client generation remains deferred. Read when changing OpenAPI schemas, investigating generated type mismatches, or choosing an API client generator.
 scope:
   - apps/web
   - apps/api
@@ -33,6 +34,7 @@ Two alternatives were rejected. \`@openapitools/openapi-generator\` offers fewer
 id: b7e35912-d6d7-48b4-9a0a-8a41cc7546c2
 created: 2026-09-22
 title: Split request/response schemas
+description: Shared API schemas made responses too broad and requests too strict; separate schemas are being introduced gradually. Read when changing request validation, response schemas, or the migration plan.
 scope:
   - apps/web
   - apps/api
@@ -50,6 +52,7 @@ The cost is that two sets of schemas must be maintained, and fields shared by bo
 id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0
 created: 2026-09-19
 title: Hydration mismatch
+description: React hydration mismatches from browser extensions, CDN HTML rewrites, and iOS link detection, with the trade-offs of available fixes. Read when investigating hydration warnings or choosing between useEffect, disabled prerendering, and suppressHydrationWarning.
 ---
 
 This error occurs when the React tree prerendered on the server differs from the tree produced by the first render in the browser. The cause is not always in the component code. Browser extensions that modify the HTML and misconfigured CSS-in-JS libraries can trigger it. So can edge or CDN features that alter the HTML response, such as Cloudflare Auto Minify.
@@ -64,6 +67,7 @@ Each fix has a different trade-off. Rendering identical content on both sides is
 id: a8f74e31-4b67-42af-8f12-d752302bf0d6
 created: 2026-09-21
 title: Read and write models
+description: Services and stores were split into write models, UI read models, and internal read models to reduce coupling. Read when adding cross-module queries, designing UI data access, or deciding where workflow logic belongs.
 ---
 
 Each business module used one service-plus-store pattern for three tasks: changing state, supplying UI data, and answering questions from other modules. That was convenient and kept the number of building blocks small, but it coupled services and gave stores too many responsibilities. Every need is now classified as one of three models.

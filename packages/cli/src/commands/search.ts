@@ -1,7 +1,8 @@
 import { telemetry } from "../telemetry";
 import { loadScopedWorkspaceMemories } from "../load-scoped-workspace-memories";
+import { summarizeMemory } from "../summarize-memory";
 import type { Command } from "commander";
-import { dirname, relative } from "node:path";
+import { relative } from "node:path";
 import MiniSearch from "minisearch";
 
 let cached: { stamp: string; index: MiniSearch } | undefined;
@@ -11,7 +12,7 @@ let cached: { stamp: string; index: MiniSearch } | undefined;
  * set availableToWorkspace.
  * Local scopes filter which memories apply; results are ranked before pagination.
  *
- * @returns Memory directory paths, scores, frontmatter, and bodies for the requested page.
+ * @returns Memory directory paths, titles, and descriptions for the requested page.
  */
 export async function search({
   roots,
@@ -63,15 +64,10 @@ export async function search({
     },
   });
   const matches = telemetry.measureSync({ name: "query", run: () => index.search(query) });
-  const result = matches.slice(offset, offset + limit).map(({ id, score }) => {
-    const memory = byPath.get(String(id))!;
-    return {
-      path: dirname(memory.path),
-      score,
-      frontmatter: memory.frontmatter,
-      body: memory.body,
-    };
-  });
+  // Bodies and other metadata stay searchable, but only summaries leave the command.
+  const result = matches
+    .slice(offset, offset + limit)
+    .map(({ id }) => summarizeMemory(byPath.get(String(id))!));
   telemetry.set({ match_count: matches.length, result_count: result.length });
   return result;
 }

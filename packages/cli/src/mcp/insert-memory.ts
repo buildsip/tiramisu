@@ -30,8 +30,8 @@ export const insertSchema = z.strictObject(
   {
     error: (issue) =>
       issue.code === "unrecognized_keys"
-        ? "Remove this unknown field. Only body and frontmatter are allowed at the top level. Put title, scope, protection flags, and configured custom fields inside frontmatter; pass workspace paths via --roots and --repo."
-        : 'Expected one JSON object: {"body":"Markdown content","frontmatter":{"title":"Memory title","scope":["apps/web/auth"]}}. Use ["."] only for memories that apply to the whole repo.',
+        ? "Remove this unknown field. Only body and frontmatter are allowed at the top level. Put title, description, scope, protection flags, and configured custom fields inside frontmatter; pass workspace paths via --roots and --repo."
+        : 'Expected one JSON object: {"body":"Markdown content","frontmatter":{"title":"Memory title","description":"A brief description of the memory content.","scope":["apps/web/auth"]}}. Use ["."] only for memories that apply to the whole repo.',
   },
 );
 

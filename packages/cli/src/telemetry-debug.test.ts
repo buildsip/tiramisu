@@ -54,7 +54,9 @@ async function readLog() {
     if (entries.some((entry) => entry.event === "tool finished")) return { text, entries };
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
-  throw new Error("No completed telemetry event was logged. Check development capture after response delivery.");
+  throw new Error(
+    "No completed telemetry event was logged. Check development capture after response delivery.",
+  );
 }
 
 it("logs CLI search events locally while keeping stdout JSON and avoiding HTTP", async () => {

@@ -31,7 +31,9 @@ it("ships the init template without bundling the GitHub skill", () => {
     const [pack] = JSON.parse(output) as { filename: string; files: { path: string }[] }[];
     const files = pack!.files.map((file) => file.path);
     expect(files).toContain("templates/AGENTS.md");
-    expect(files.some((path) => path.startsWith("skills/") || path.startsWith("dist/skills/"))).toBe(false);
+    expect(
+      files.some((path) => path.startsWith("skills/") || path.startsWith("dist/skills/")),
+    ).toBe(false);
     // Check the actual tarball so missing or stale templates fail before publishing.
     const packed = execFileSync(
       "tar",
