@@ -139,6 +139,50 @@ function run({
 }
 
 describe("insert and update", () => {
+  it.each([
+    {
+      label: "long descriptions",
+      description:
+        "Read when diagnosing a memory search result or a global package installation. ".repeat(5),
+      expected:
+        "Read when diagnosing a memory search result or a global package installation. "
+          .repeat(5)
+          .trim(),
+    },
+    {
+      label: "line breaks and indentation",
+      description: "\nProfile cache\r\n  reused responses.\n\n\tRead when debugging\rstale profiles.\n",
+      expected: "Profile cache reused responses. Read when debugging stale profiles.",
+    },
+    {
+      label: "Unicode line separators",
+      description: "Profile cache\u2028reused responses.\u2029Read when debugging profiles.",
+      expected: "Profile cache reused responses. Read when debugging profiles.",
+    },
+    {
+      label: "quoted YAML values",
+      description:
+        'Profile cache: "GET /api/me" used  shared keys.\nRead when debugging incorrect profiles or 401 responses after login.',
+      expected:
+        'Profile cache: "GET /api/me" used  shared keys. Read when debugging incorrect profiles or 401 responses after login.',
+    },
+  ])("saves $label on one physical line on insert and update", async ({ description, expected }) => {
+    const body = "# Context\n\nKeep these\nbody lines.\n";
+    const path = await memory({ title: "Cache", description, body });
+    /** Check the saved YAML as well as its parsed value; either can contain line breaks. */
+    const check = async (value: string) => {
+      const source = await readFile(join(path, NAMES.MEMORY_MD), "utf8");
+      const field = source.match(/^description:.*(?:\n[ \t]+.*)*/m)?.[0];
+      expect(field).toBeDefined();
+      expect(field).not.toMatch(/[\r\n\u2028\u2029]/u);
+      expect((await frontmatter(path)).description).toBe(value);
+      expect(await readBody(path)).toBe(body);
+    };
+    await check(expected);
+    await edit({ path, description: `${description}\nUpdated.` });
+    await check(`${expected} Updated.`);
+  });
+
   it("updates descriptions independently and preserves them when omitted", async () => {
     const path = await memory({
       title: "Cache",
