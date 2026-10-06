@@ -30,7 +30,9 @@ afterEach(async () => {
 it("shows only .memories/ when no category folders exist", async () => {
   const result = await describeMemory({ path, repo });
   expect(result).toContain(`anywhere within ${JSON.stringify(data)}`);
-  expect(result).toContain("Nesting a memory directory inside another memory directory is an anti-pattern.");
+  expect(result).toContain(
+    "Nesting a memory directory inside another memory directory is an anti-pattern.",
+  );
   expect(result).toContain("create new parent directories");
   expect(result).toContain("act as tags when searching memories");
   expect(result).toContain("human-readable names");

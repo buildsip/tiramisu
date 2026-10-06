@@ -4,6 +4,61 @@ import { insertSchema } from "./mcp/insert-memory";
 import { updateSchema } from "./mcp/update-memory";
 import { validateFrontmatter } from "./validate-frontmatter";
 
+it.each([undefined, null, "", " \n\t", 42, {}, []].map((description) => ({ description })))(
+  "rejects a missing or invalid description on insert and in stored metadata: $description",
+  ({ description }) => {
+    const frontmatter = { title: "Title", description, scope: ["."] };
+    for (const parse of [
+      () =>
+        parseValue({
+          schema: insertSchema,
+          value: { body: "Content", frontmatter },
+          label: "insert input",
+        }),
+      () =>
+        validateFrontmatter({
+          value: { ...frontmatter, id: "id", created: "2025-04-01" },
+          config: {},
+          path: "/repo/memory.md",
+        }),
+    ]) {
+      expect(parse).toThrow("Provide a nonblank string briefly describing the memory's content.");
+      expect(parse).toThrow("→ at frontmatter.description");
+    }
+  },
+);
+
+it.each([null, "", " \n\t", 42, {}, []].map((description) => ({ description })))(
+  "rejects an invalid description patch: $description",
+  ({ description }) => {
+    expect(() =>
+      parseValue({
+        schema: updateSchema,
+        value: { frontmatter: { description } },
+        label: "update input",
+      }),
+    ).toThrow("→ at frontmatter.description");
+  },
+);
+
+it("accepts descriptions without a length limit and excludes them from custom metadata", () => {
+  const description = "A detailed memory description. ".repeat(1000);
+  const frontmatter = { title: "Title", description, scope: ["."] };
+  expect(insertSchema.parse({ body: "Content", frontmatter }).frontmatter.description).toBe(
+    description,
+  );
+  expect(updateSchema.parse({ frontmatter: { description } }).frontmatter?.description).toBe(
+    description,
+  );
+  expect(
+    validateFrontmatter({
+      value: { ...frontmatter, id: "id", created: "2025-04-01" },
+      config: { frontmatter: { custom: { additionalProperties: false } } },
+      path: "/repo/memory.md",
+    }).description,
+  ).toBe(description);
+});
+
 it.each([
   {
     field: "frontmatter.title",
@@ -60,7 +115,15 @@ it.each([
     parseValue({
       schema: insertSchema,
       label: "insert input",
-      value: { body: "Markdown", frontmatter: { title: "Title", scope: ["."], ...input } },
+      value: {
+        body: "Markdown",
+        frontmatter: {
+          description: "A memory description.",
+          title: "Title",
+          scope: ["."],
+          ...input,
+        },
+      },
     }),
   ).toThrow(
     new RegExp(
@@ -84,7 +147,7 @@ it("names unknown top-level keys and explains where memory fields belong", () =>
       label: "insert input",
       value: {
         body: "Markdown",
-        frontmatter: { title: "Title", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Title", scope: ["."] },
         typo: true,
         custom: {},
       },
@@ -97,7 +160,13 @@ it("names unknown top-level keys and explains where memory fields belong", () =>
 it("reports the invalid entry in a stored scope array", () => {
   expect(() =>
     validateFrontmatter({
-      value: { id: "id", title: "Title", created: "2025-04-01", scope: ["apps/web", 1] },
+      value: {
+        id: "id",
+        description: "A memory description.",
+        title: "Title",
+        created: "2025-04-01",
+        scope: ["apps/web", 1],
+      },
       config: {},
       path: "/repo/memory.md",
     }),
@@ -111,7 +180,13 @@ it.each(["apps/web", "*", []].map((scope) => ({ scope })))(
   ({ scope }) => {
     expect(() =>
       validateFrontmatter({
-        value: { id: "id", title: "Title", created: "2025-04-01", scope },
+        value: {
+          id: "id",
+          description: "A memory description.",
+          title: "Title",
+          created: "2025-04-01",
+          scope,
+        },
         config: {},
         path: "/repo/memory.md",
       }),
@@ -120,28 +195,47 @@ it.each(["apps/web", "*", []].map((scope) => ({ scope })))(
 );
 
 it("requires stored id and created while allowing scope to be omitted", () => {
-  const value = { id: "id", title: "Title", created: "2025-04-01" };
+  const value = {
+    id: "id",
+    description: "A memory description.",
+    title: "Title",
+    created: "2025-04-01",
+  };
   expect(validateFrontmatter({ value, config: {}, path: "/repo/memory.md" })).toEqual(value);
   expect(
     validateFrontmatter({
-      value: { id: "id", title: "Title", created: new Date(Date.UTC(2025, 3, 1)) },
+      value: {
+        id: "id",
+        description: "A memory description.",
+        title: "Title",
+        created: new Date(Date.UTC(2025, 3, 1)),
+      },
       config: {},
       path: "/repo/memory.md",
     }),
   ).toEqual(value);
   expect(() =>
-    validateFrontmatter({ value: { title: "Title" }, config: {}, path: "/repo/memory.md" }),
+    validateFrontmatter({
+      value: { title: "Title", description: "A memory description." },
+      config: {},
+      path: "/repo/memory.md",
+    }),
   ).toThrow("frontmatter.id");
   expect(() =>
     validateFrontmatter({
-      value: { id: "id", title: "Title" },
+      value: { id: "id", title: "Title", description: "A memory description." },
       config: {},
       path: "/repo/memory.md",
     }),
   ).toThrow("frontmatter.created");
   expect(() =>
     validateFrontmatter({
-      value: { id: "id", title: "Title", created: "2026-02-31" },
+      value: {
+        id: "id",
+        description: "A memory description.",
+        title: "Title",
+        created: "2026-02-31",
+      },
       config: {},
       path: "/repo/memory.md",
     }),
@@ -151,7 +245,14 @@ it("requires stored id and created while allowing scope to be omitted", () => {
 it("keeps Ajv custom schema validation and reports required fields, array indices, and enum choices", () => {
   expect(() =>
     validateFrontmatter({
-      value: { id: "id", title: "Title", created: "2025-04-01", status: "unknown", anchors: [42] },
+      value: {
+        id: "id",
+        description: "A memory description.",
+        title: "Title",
+        created: "2025-04-01",
+        status: "unknown",
+        anchors: [42],
+      },
       path: "/repo/memory.md",
       config: {
         frontmatter: {
@@ -174,7 +275,13 @@ it("keeps Ajv custom schema validation and reports required fields, array indice
 it("preserves Markdown whitespace and custom fields when parsing JSON input", () => {
   const value = {
     body: "  indented code\n\n",
-    frontmatter: { title: "Title", scope: ["."], ticket: "ENG-1", details: { anchors: ["a"] } },
+    frontmatter: {
+      description: "A memory description.",
+      title: "Title",
+      scope: ["."],
+      ticket: "ENG-1",
+      details: { anchors: ["a"] },
+    },
   };
   expect(parseValue({ schema: insertSchema, label: "insert input", value })).toEqual(value);
 });
@@ -230,7 +337,7 @@ it.each(["provided-id", null])("rejects caller-supplied IDs on insert: %s", (id)
       label: "insert input",
       value: {
         body: "body",
-        frontmatter: { title: "Title", scope: ["."], id },
+        frontmatter: { description: "A memory description.", title: "Title", scope: ["."], id },
       },
     }),
   ).toThrow(/Omit id[^\n]*\n  → at frontmatter.id/);
@@ -243,7 +350,12 @@ it.each(["2020-01-01", null])("rejects caller-supplied created dates on insert: 
       label: "insert input",
       value: {
         body: "body",
-        frontmatter: { title: "Title", scope: ["."], created },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Title",
+          scope: ["."],
+          created,
+        },
       },
     }),
   ).toThrow(/Omit created[^\n]*\n  → at frontmatter.created/);

@@ -47,6 +47,7 @@ Example:
 id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0
 created: 2026-09-19
 title: Axios retry duplication after reconnect
+description: Reconnects registered Axios retry interceptors more than once. Read when debugging duplicate requests after reconnects, changing client initialization, or adding retry logic.
 
 # custom fields
 linear: https://linear.app/acme/issue/ACM-86/axios-reconnect-issue

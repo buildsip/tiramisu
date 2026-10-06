@@ -139,7 +139,14 @@ describe("MCP stdio server", () => {
     const insert = tools.find((tool) => tool.name === "insert-memory")!;
     expect(insert.inputSchema.required).toEqual(["roots", "repo", "body", "frontmatter"]);
     const fields = insert.inputSchema.properties!.frontmatter as Tool["inputSchema"];
-    expect(fields.required).toEqual(["title", "scope"]);
+    expect(fields.required).toEqual(["title", "description", "scope"]);
+    expect(fields.properties!.description).toMatchObject({
+      type: "string",
+      minLength: 1,
+      description:
+        'A brief description of what the memory is about AND specific contexts for when to read it (this is the primary triggering mechanism). All "when to read" info goes here, not in the body.',
+    });
+    expect(fields.properties!.description).not.toHaveProperty("maxLength");
     expect(fields.additionalProperties).toEqual({});
     expect(fields.properties).not.toHaveProperty("id");
     expect(fields.properties!.title).toMatchObject({ type: "string", minLength: 1 });
@@ -187,7 +194,11 @@ describe("MCP stdio server", () => {
       name: "insert-memory",
       args: {
         body: "Cache responses carefully",
-        frontmatter: { title: "Cache responses", scope: ["."] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Cache responses",
+          scope: ["."],
+        },
       },
     });
     expect(created.isError).toBeUndefined();
@@ -239,7 +250,9 @@ describe("MCP stdio server", () => {
     const found = JSON.parse(
       text(await call({ name: "search-memories", args: { query: "cache" } })),
     );
-    expect(found[0]).toMatchObject({ path, body: "Cache responses carefully\n" });
+    expect(found).toEqual([
+      { path, title: "Cache responses", description: "A memory description." },
+    ]);
     const updated = await call({
       name: "update-memory",
       args: {
@@ -262,9 +275,12 @@ describe("MCP stdio server", () => {
         }),
       ),
     );
-    expect(page[0].frontmatter.id).toBe(found[0].frontmatter.id);
-    expect(page[0].path).toBe(next);
-    expect(page[0].body).toBe(found[0].body);
+    expect(page).toEqual([
+      { path: next, title: "Package cache", description: "A memory description." },
+    ]);
+    expect(await readFile(join(next, "memory.md"), "utf8")).toContain(
+      "Cache responses carefully\n",
+    );
     expect(
       JSON.parse(
         text(await call({ name: "search-memories", args: { query: "cache", offset: 1 } })),
@@ -295,7 +311,14 @@ describe("MCP stdio server", () => {
     await connect();
     const created = await call({
       name: "insert-memory",
-      args: { body: "Details", frontmatter: { title: "New note", scope: ["apps/web"] } },
+      args: {
+        body: "Details",
+        frontmatter: {
+          description: "A memory description.",
+          title: "New note",
+          scope: ["apps/web"],
+        },
+      },
     });
     const listing =
       ".memories/\n.memories/network/\n.memories/network/http/\n.memories/rendering/\n.memories/rendering/hydration/\n.memories/state/\n.memories/state/zustand/\n.memories/state/zustand/selectors/";
@@ -331,7 +354,7 @@ describe("MCP stdio server", () => {
     }
     const invalid = await call({
       name: "insert-memory",
-      args: { body: "Note", frontmatter: { title: "Note" } },
+      args: { body: "Note", frontmatter: { description: "A memory description.", title: "Note" } },
     });
     expect(invalid.isError).toBe(true);
     expect(text(invalid)).toContain("frontmatter");
@@ -363,6 +386,7 @@ describe("MCP stdio server", () => {
         args: {
           body: "Original",
           frontmatter: {
+            description: "A memory description.",
             title,
             scope: ["."],
             doNotEdit: protectedMemory,
@@ -394,7 +418,12 @@ describe("MCP stdio server", () => {
     await connect();
     const args = {
       body: "Details",
-      frontmatter: { title: "Ticket", scope: ["."], ticket: "ENG-1" },
+      frontmatter: {
+        description: "A memory description.",
+        title: "Ticket",
+        scope: ["."],
+        ticket: "ENG-1",
+      },
     };
     expect((await call({ name: "insert-memory", args })).isError).toBeUndefined();
     const invalid = await call({

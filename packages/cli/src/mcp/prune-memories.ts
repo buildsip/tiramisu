@@ -13,7 +13,7 @@ export const pruneMemories = tool({
   // Review guidance belongs with the results, and only applies when candidates exist.
   instructions: async ({ result }) =>
     result.length
-      ? "Read the candidates, check their relevance against the code, and suggest which to delete or keep."
+      ? "Read memory.md inside each candidate's directory path, check its relevance against the code, and suggest which to delete or keep."
       : undefined,
   readOnly: true,
 });

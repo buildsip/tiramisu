@@ -1,6 +1,6 @@
 import { telemetry } from "../telemetry";
 import type { Command } from "commander";
-import { dirname, isAbsolute } from "node:path";
+import { isAbsolute } from "node:path";
 import { CLI_NAME } from "../cli-name";
 import { createdMillis } from "../created-date";
 import { findStores } from "../find-stores";
@@ -8,6 +8,7 @@ import { loadMemories } from "../load-memories";
 import { readPruneConfig } from "../read-prune-config";
 import { readUpvotes } from "../read-upvotes";
 import { resolveGitRoot } from "../resolve-git-root";
+import { summarizeMemory } from "../summarize-memory";
 
 /** Lists expired, unprotected directories for user-requested review; never deletes anything. */
 export async function prune({ repo }: { repo: string }) {
@@ -30,7 +31,7 @@ export async function prune({ repo }: { repo: string }) {
   const memories = loaded.filter((memory) => !memory.frontmatter.doNotDelete);
   telemetry.set({ scanned_count: loaded.length, eligible_count: memories.length });
   const now = Date.now();
-  const candidates: string[] = [];
+  const candidates: ReturnType<typeof summarizeMemory>[] = [];
   const votes = await telemetry.measure({
     name: "database",
     run: () =>
@@ -48,10 +49,10 @@ export async function prune({ repo }: { repo: string }) {
       last?.human === undefined ? -Infinity : last.human + config.humanUpvoteTtl,
       last?.agent === undefined ? -Infinity : last.agent + config.agentUpvoteTtl,
     );
-    if (now >= expires) candidates.push(dirname(memory.path));
+    if (now >= expires) candidates.push(summarizeMemory(memory));
   }
   telemetry.set({ candidate_count: candidates.length });
-  return candidates.sort((a, b) => a.localeCompare(b));
+  return candidates.sort((a, b) => a.path.localeCompare(b.path));
 }
 
 /** Registers the CLI equivalent of prune-memories with no scope or result cap. */

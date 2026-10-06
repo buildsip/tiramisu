@@ -10,6 +10,7 @@ Frontmatter fields act as searchable tags.
 id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0          # DO NOT CHANGE
 created: 2026-09-19                               # DO NOT CHANGE
 title: Axios retry duplication after reconnect
+description: Reconnects registered Axios retry interceptors more than once. Read when debugging duplicate requests after reconnects, changing client initialization, or adding retry logic.
 scope:
   - apps        # Includes every app beneath this directory
   - services/billing
@@ -41,6 +42,16 @@ title: Axios reconnect retry
 ```
 
 The title becomes the name of the memory directory. [`update`](./mcp.md#update-memory) always repairs the memory directory to this slug.
+
+### description
+
+Required. A brief description of what the memory is about AND specific contexts for when to read it (this is the primary triggering mechanism). All "when to read" info goes here, not in the body.
+
+Must be a nonblank string; there is no length limit.
+
+```yaml
+description: Reconnects registered Axios retry interceptors...
+```
 
 ### doNotDelete
 
@@ -93,6 +104,7 @@ Example:
 id: 7fe24e91-4808-4f80-bc39-5d86f7a74be0
 created: 2026-09-19
 title: Axios retry duplication after reconnect
+description: Reconnects registered Axios retry interceptors more than once. Read when debugging duplicate requests after reconnects, changing client initialization, or adding retry logic.
 
 linear: https://linear.app/acme/issue/ACM-86/axios-reconnect-issue
 sentry:

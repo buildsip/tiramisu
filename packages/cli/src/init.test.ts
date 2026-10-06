@@ -194,7 +194,10 @@ describe("tiramisu init", () => {
     mkdirSync(skill, { recursive: true });
     writeFileSync(
       join(skill, NAMES.SKILL_MD),
-      readFileSync(new URL("../../../skills/tiramisu-memory-writing/SKILL.md", import.meta.url), "utf8"),
+      readFileSync(
+        new URL("../../../skills/tiramisu-memory-writing/SKILL.md", import.meta.url),
+        "utf8",
+      ),
     );
   }
 

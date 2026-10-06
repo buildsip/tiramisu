@@ -34,9 +34,10 @@ export function validateFrontmatter({
     label: `frontmatter ${path}`,
     path: ["frontmatter"],
   });
+  // Built-in fields never pass through the repository's custom metadata schema.
   const custom = Object.fromEntries(
     Object.entries(frontmatter).filter(
-      ([key]) => !["id", "created", "title", "scope", "doNotEdit", "doNotDelete"].includes(key),
+      ([key]) => !Object.hasOwn(storedFrontmatterSchema.shape, key),
     ),
   );
   const schema = config.frontmatter?.custom;

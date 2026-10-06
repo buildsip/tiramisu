@@ -22,6 +22,7 @@ import { search } from "./commands/search";
 import { insert } from "./commands/insert";
 import { update } from "./commands/update";
 import { NAMES } from "./names";
+import { readMemory } from "./read-memory";
 import { cliEnv } from "./test/cli-env";
 
 // Preserve the real filesystem operation for rollback and error-injection tests.
@@ -84,6 +85,7 @@ async function memory({
     repo,
     body,
     frontmatter: {
+      description: "A memory description.",
       title,
       scope: scope ?? [relative(repo, project) || "."],
       ...fields,
@@ -109,6 +111,11 @@ async function edit({
   return saved!;
 }
 
+/** Reads the saved body directly, since search returns only summaries. */
+async function readBody(path: string) {
+  return (await readMemory({ path: join(path, NAMES.MEMORY_MD), project: root, repo: root })).body;
+}
+
 async function frontmatter(path: string) {
   const source = await readFile(join(path, NAMES.MEMORY_MD), "utf8");
   return parse(source.split("---")[1]!);
@@ -132,6 +139,61 @@ function run({
 }
 
 describe("insert and update", () => {
+  it("updates descriptions independently and preserves them when omitted", async () => {
+    const path = await memory({
+      title: "Cache",
+      description: "Old summary.",
+      body: "Preserve this body.",
+    });
+    const before = await frontmatter(path);
+    expect(await edit({ path, description: "New summary." })).toBe(path);
+    expect(await frontmatter(path)).toEqual({ ...before, description: "New summary." });
+    expect(await readBody(path)).toBe("Preserve this body.\n");
+    await edit({ path, body: "Updated body." });
+    expect((await frontmatter(path)).description).toBe("New summary.");
+    const source = await readFile(join(path, NAMES.MEMORY_MD), "utf8");
+    await expect(edit({ path, description: " \n" })).rejects.toThrow("frontmatter.description");
+    expect(await readFile(join(path, NAMES.MEMORY_MD), "utf8")).toBe(source);
+  });
+
+  it("returns only directory paths, titles, and descriptions when searching any memory field", async () => {
+    await config({
+      project: root,
+      value: { frontmatter: { custom: { properties: { ticket: { type: "string" } } } } },
+    });
+    const path = await memory({
+      title: "Cache",
+      description: "Explains reconnection behavior.",
+      body: "interceptors",
+      ticket: "ENG123",
+    });
+    for (const query of ["Cache", "reconnection", "interceptors", "ENG123"]) {
+      expect(await search({ roots, repo: root, query })).toEqual([
+        { path, title: "Cache", description: "Explains reconnection behavior." },
+      ]);
+    }
+    await edit({ path, description: "Explains authentication behavior." });
+    expect(await search({ roots, repo: root, query: "reconnection" })).toEqual([]);
+    expect(await search({ roots, repo: root, query: "authentication" })).toEqual([
+      { path, title: "Cache", description: "Explains authentication behavior." },
+    ]);
+  });
+
+  it("rejects stored memories without a description when searching or updating", async () => {
+    const path = await memory({ title: "Cache" });
+    const header = await frontmatter(path);
+    delete header.description;
+    const source = `---\n${stringify(header)}---\n\nContent\n`;
+    await writeFile(join(path, NAMES.MEMORY_MD), source);
+    await expect(search({ roots, repo: root, query: "cache" })).rejects.toThrow(
+      "frontmatter.description",
+    );
+    await expect(edit({ path, description: "A new description." })).rejects.toThrow(
+      "frontmatter.description",
+    );
+    expect(await readFile(join(path, NAMES.MEMORY_MD), "utf8")).toBe(source);
+  });
+
   it("moves a root memory into a package when its scope narrows", async () => {
     const old = await memory({ title: "Legacy memory" });
     const id = (await frontmatter(old)).id;
@@ -183,9 +245,7 @@ describe("insert and update", () => {
       /^---\nid: [0-9a-f-]{36}\ncreated: \d{4}-\d{2}-\d{2}\n/,
     );
     expect(existsSync(join(root, NAMES.MEMORIES))).toBe(false);
-    expect((await search({ roots, repo: root, query: "parse" }))[0]?.body).toBe(
-      "Do not parse --- in Markdown.\n",
-    );
+    expect(await readBody(path)).toBe("Do not parse --- in Markdown.\n");
   });
 
   it("updates by path, renames the folder, and preserves attachments and omitted metadata", async () => {
@@ -430,7 +490,11 @@ describe("insert and update", () => {
         roots,
         repo: root,
         body: "body",
-        frontmatter: { title: "Wrong repo", scope: ["apps/web"] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Wrong repo",
+          scope: ["apps/web"],
+        },
       }),
     ).rejects.toThrow("different Git repository");
   });
@@ -487,7 +551,11 @@ describe("insert and update", () => {
         roots,
         repo: root,
         body: "body",
-        frontmatter: { title: "Linked", scope: ["linked-package"] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Linked",
+          scope: ["linked-package"],
+        },
       }),
     ).rejects.toThrow("Symbolic links");
   });
@@ -587,7 +655,7 @@ describe("insert and update", () => {
         roots,
         repo: join(web, "src"),
         body: "body",
-        frontmatter: { title: "Wrong root", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Wrong root", scope: ["."] },
       }),
     ).rejects.toThrow("Git root");
     await expect(
@@ -595,7 +663,7 @@ describe("insert and update", () => {
         roots: [root],
         repo: team,
         body: "body",
-        frontmatter: { title: "Outside root", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Outside root", scope: ["."] },
       }),
     ).rejects.toThrow("workspace roots");
     await expect(
@@ -603,7 +671,7 @@ describe("insert and update", () => {
         roots: [temp],
         repo: temp,
         body: "body",
-        frontmatter: { title: "No git", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "No git", scope: ["."] },
       }),
     ).rejects.toThrow("Git working tree");
   });
@@ -654,9 +722,7 @@ describe("partial updates", () => {
       const [saved] = await update({ roots, repo: root, path: wrong, ...patch });
       expect(saved).toBe(join(tags, "deja-vu-cache"));
       expect(await frontmatter(saved!)).toEqual(header);
-      expect((await search({ roots, repo: root, query: "cache" }))[0]?.body).toBe(
-        change === "body" ? "new content\n" : body,
-      );
+      expect(await readBody(saved!)).toBe(change === "body" ? "new content\n" : body);
       expect(await readFile(join(saved!, "trace.txt"), "utf8")).toBe("keep attachment");
       expect(existsSync(wrong)).toBe(false);
       await expect(update({ roots, repo: root, path: wrong })).rejects.toThrow("Search again");
@@ -720,7 +786,7 @@ describe("partial updates", () => {
     });
     expect(saved).toBe(join(root, NAMES.MEMORIES, "new"));
     expect(await frontmatter(saved!)).toMatchObject({ id, title: "New" });
-    expect((await search({ roots, repo: root, query: "New" }))[0]?.body).toBe("preserve body\n");
+    expect(await readBody(saved!)).toBe("preserve body\n");
   });
 
   it("does not overwrite another folder during self-healing", async () => {
@@ -830,7 +896,8 @@ describe("search", () => {
     await config({ project: root, value });
     const result = await search({ roots, repo: root, query: "legacyticket" });
     expect(result).toHaveLength(1);
-    expect(result[0]?.frontmatter.ticket).toBe("legacyticket");
+    expect(result[0]?.path).toBe(path);
+    expect((await frontmatter(path)).ticket).toBe("legacyticket");
     expect(await readFile(join(path, NAMES.MEMORY_MD), "utf8")).toBe(before);
   });
 
@@ -897,11 +964,11 @@ describe("search", () => {
   });
   it("searches all project packages globally and ranks titles above bodies", async () => {
     const best = await memory({ project: web, title: "Unicorn" });
-    await memory({ project: api, title: "Other", body: "unicorn" });
+    const second = await memory({ project: api, title: "Other", body: "unicorn" });
     const result = await search({ roots, repo: root, query: "unicorn" });
     expect(result).toHaveLength(2);
     expect(result[0]?.path).toBe(best);
-    expect(result[0]?.score).toBeGreaterThan(result[1]!.score);
+    expect(result[1]?.path).toBe(second);
   });
 
   it("walks up specific scopes without reading malformed sibling memories", async () => {
@@ -1217,7 +1284,7 @@ describe("delete", () => {
       roots: [outside],
       repo: outside,
       body: "Outside this workspace",
-      frontmatter: { title: "Outside", scope: ["."] },
+      frontmatter: { description: "A memory description.", title: "Outside", scope: ["."] },
     });
     expect(await deleteMemories({ paths: [path!] })).toEqual([path!]);
     await expect(deleteMemories({ paths: [join(root, "package.json")] })).rejects.toThrow(
@@ -1315,7 +1382,11 @@ describe("built CLI", () => {
         args: [command, "--roots", root, "--repo", root, ...flags],
         input: JSON.stringify({
           body: "Changed",
-          frontmatter: { title: "Bad", scope: ["bad/bad/bad"] },
+          frontmatter: {
+            description: "A memory description.",
+            title: "Bad",
+            scope: ["bad/bad/bad"],
+          },
         }),
       });
       expect(result.status).toBe(1);
@@ -1343,9 +1414,7 @@ describe("built CLI", () => {
     expect(result.stderr).toBe("");
     expect(JSON.parse(result.stdout)).toEqual([path]);
     expect(await frontmatter(path)).toEqual(before);
-    expect((await search({ roots, repo: root, query: "Repair" }))[0]?.body).toBe(
-      "remember this detail\n",
-    );
+    expect(await readBody(path)).toBe("remember this detail\n");
     expect(existsSync(wrong)).toBe(false);
   });
 
@@ -1376,7 +1445,10 @@ describe("built CLI", () => {
   it("requires scope before inserting", () => {
     const result = run({
       args: ["insert", "--roots", root, "--repo", root],
-      input: JSON.stringify({ body: "body", frontmatter: { title: "New" } }),
+      input: JSON.stringify({
+        body: "body",
+        frontmatter: { title: "New", description: "A memory description." },
+      }),
     });
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
@@ -1401,7 +1473,7 @@ describe("built CLI", () => {
       args: [command, "--roots", root, "--repo", root, ...flags],
       input: JSON.stringify({
         body: "Details",
-        frontmatter: { title: "Cache", scope: ["apps/*"] },
+        frontmatter: { description: "A memory description.", title: "Cache", scope: ["apps/*"] },
       }),
     });
     expect(result.status).toBe(1);
@@ -1415,7 +1487,7 @@ describe("built CLI", () => {
       args: ["insert", ...args],
       input: JSON.stringify({
         body: "CLI content\n",
-        frontmatter: { title: "CLI memory", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "CLI memory", scope: ["."] },
       }),
     });
     expect(inserted.status, inserted.stderr).toBe(0);
@@ -1424,7 +1496,9 @@ describe("built CLI", () => {
     const found = run({ args: ["search", ...args, "--query", "CLI"] });
     expect(found.status, found.stderr).toBe(0);
     expect(found.stderr).toBe("");
-    expect(JSON.parse(found.stdout)[0]).toMatchObject({ path, body: "CLI content\n" });
+    expect(JSON.parse(found.stdout)).toEqual([
+      { path, title: "CLI memory", description: "A memory description." },
+    ]);
     const deleted = run({ args: ["delete", "--paths", path] });
     expect(deleted.status, deleted.stderr).toBe(0);
     expect(JSON.parse(deleted.stdout)).toEqual([path]);
@@ -1436,7 +1510,11 @@ describe("built CLI", () => {
       args: ["insert", ...args],
       input: JSON.stringify({
         body: "package body",
-        frontmatter: { title: "Package note", scope: ["apps/web"] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Package note",
+          scope: ["apps/web"],
+        },
       }),
     });
     expect(created.status, created.stderr).toBe(0);
@@ -1447,7 +1525,11 @@ describe("built CLI", () => {
       args: ["update", ...args, "--path", path],
       input: JSON.stringify({
         body: "changed body",
-        frontmatter: { title: "Updated note", scope: ["apps/api"] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Updated note",
+          scope: ["apps/api"],
+        },
       }),
     });
     expect(updated.status, updated.stderr).toBe(0);
@@ -1467,7 +1549,7 @@ describe("built CLI", () => {
       args: [command, "--roots", root, "--repo", web, ...flags],
       input: JSON.stringify({
         body: "body",
-        frontmatter: { title: "Note", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
       }),
     });
     expect(result.status).toBe(1);
@@ -1487,6 +1569,7 @@ describe("built CLI", () => {
       JSON.stringify({
         body,
         frontmatter: {
+          description: "A memory description.",
           title: "File input",
           scope: ["apps/web"],
           ticket: "ENG-123",
@@ -1503,7 +1586,7 @@ describe("built CLI", () => {
     expect(created.status, created.stderr).toBe(0);
     expect(created.stderr).toBe("");
     const [path] = JSON.parse(created.stdout);
-    expect((await search({ roots, repo: root, query: "Cache" }))[0]?.body).toBe(body);
+    expect(await readBody(path)).toBe(body);
     const updated = run({
       args: ["update", ...args, "--path", path, "--input", "-"],
       input: JSON.stringify({
@@ -1538,7 +1621,12 @@ describe("built CLI", () => {
       args: ["insert", ...args],
       input: JSON.stringify({
         body: "Original",
-        frontmatter: { title: "Protected", doNotEdit: true, scope: ["."] },
+        frontmatter: {
+          description: "A memory description.",
+          title: "Protected",
+          doNotEdit: true,
+          scope: ["."],
+        },
       }),
     });
     expect(created.status, created.stderr).toBe(0);
@@ -1563,64 +1651,127 @@ describe("built CLI", () => {
     { label: "null", value: null },
     { label: "string", value: "memory" },
     { label: "number", value: 42 },
-    { label: "missing body", value: { frontmatter: { title: "Note", scope: ["."] } } },
+    {
+      label: "missing body",
+      value: { frontmatter: { description: "A memory description.", title: "Note", scope: ["."] } },
+    },
     { label: "missing frontmatter", value: { body: "Content" } },
-    { label: "missing title", value: { body: "Content", frontmatter: { scope: ["."] } } },
+    {
+      label: "missing title",
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", scope: ["."] },
+      },
+    },
+    {
+      label: "missing description",
+      value: { body: "Content", frontmatter: { title: "Note", scope: ["."] } },
+    },
+    {
+      label: "blank description",
+      value: { body: "Content", frontmatter: { title: "Note", description: " \n", scope: ["."] } },
+    },
     {
       label: "blank title",
-      value: { body: "Content", frontmatter: { title: "  ", scope: ["."] } },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "  ", scope: ["."] },
+      },
     },
     {
       label: "wrong body type",
-      value: { body: 42, frontmatter: { title: "Note", scope: ["."] } },
+      value: {
+        body: 42,
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
+      },
     },
     {
       label: "blank body",
-      value: { body: "\n", frontmatter: { title: "Note", scope: ["."] } },
+      value: {
+        body: "\n",
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
+      },
     },
     {
       label: "invalid id",
-      value: { body: "Content", frontmatter: { title: "Note", scope: ["."], id: null } },
+      value: {
+        body: "Content",
+        frontmatter: {
+          description: "A memory description.",
+          title: "Note",
+          scope: ["."],
+          id: null,
+        },
+      },
     },
     {
       label: "removed package",
       value: {
         body: "Content",
-        frontmatter: { title: "Note", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
         package: "apps/web",
       },
     },
     {
       label: "string scope",
-      value: { body: "Content", frontmatter: { title: "Note", scope: "apps/web" } },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "Note", scope: "apps/web" },
+      },
     },
     {
       label: "invalid scope item",
-      value: { body: "Content", frontmatter: { title: "Note", scope: [1] } },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "Note", scope: [1] },
+      },
     },
     {
       label: "empty scopes",
-      value: { body: "Content", frontmatter: { title: "Note", scope: [] } },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "Note", scope: [] },
+      },
     },
     {
       label: "non-boolean protection",
-      value: { body: "Content", frontmatter: { title: "Note", scope: ["."], doNotEdit: "true" } },
+      value: {
+        body: "Content",
+        frontmatter: {
+          description: "A memory description.",
+          title: "Note",
+          scope: ["."],
+          doNotEdit: "true",
+        },
+      },
     },
     {
       label: "null protection",
-      value: { body: "Content", frontmatter: { title: "Note", scope: ["."], doNotDelete: null } },
+      value: {
+        body: "Content",
+        frontmatter: {
+          description: "A memory description.",
+          title: "Note",
+          scope: ["."],
+          doNotDelete: null,
+        },
+      },
     },
     {
       label: "old custom envelope",
       value: {
         body: "Content",
-        frontmatter: { title: "Note", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
         custom: { ticket: "x" },
       },
     },
     {
       label: "unknown field",
-      value: { body: "Content", frontmatter: { title: "Note", scope: ["."] }, typo: true },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
+        typo: true,
+      },
     },
     {
       label: "flat payload",
@@ -1630,13 +1781,17 @@ describe("built CLI", () => {
       label: "workspace roots",
       value: {
         body: "Content",
-        frontmatter: { title: "Note", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
         roots: ["/elsewhere"],
       },
     },
     {
       label: "repo",
-      value: { body: "Content", frontmatter: { title: "Note", scope: ["."] }, repo: "/elsewhere" },
+      value: {
+        body: "Content",
+        frontmatter: { description: "A memory description.", title: "Note", scope: ["."] },
+        repo: "/elsewhere",
+      },
     },
   ])("rejects $label before writing a memory", ({ value }) => {
     const result = run({
@@ -1654,7 +1809,12 @@ describe("built CLI", () => {
       args: ["insert", "--roots", root, "--repo", root],
       input: JSON.stringify({
         body: 42,
-        frontmatter: { title: " ", scope: ["apps/web", 42], doNotEdit: "true" },
+        frontmatter: {
+          description: "A memory description.",
+          title: " ",
+          scope: ["apps/web", 42],
+          doNotEdit: "true",
+        },
         typo: true,
       }),
     });
@@ -1701,7 +1861,7 @@ describe("built CLI", () => {
       args: ["insert", "--roots", root, "--repo", root, "--title", "Old flag"],
       input: JSON.stringify({
         body: "Content",
-        frontmatter: { title: "New JSON", scope: ["."] },
+        frontmatter: { description: "A memory description.", title: "New JSON", scope: ["."] },
       }),
     });
     expect(result.status).toBe(1);

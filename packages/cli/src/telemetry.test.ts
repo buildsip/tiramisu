@@ -57,7 +57,7 @@ it("records search stages, warm caches, and pagination without private data", as
       roots: [repo],
       repo,
       body: "private memory contents",
-      frontmatter: { title: "Private title", scope: ["."] },
+      frontmatter: { description: "A memory description.", title: "Private title", scope: ["."] },
     },
   });
   const args = { roots: [repo], repo, query: "private", offset: 0 };
@@ -144,6 +144,7 @@ it.each(["delete-memories", "update-memory"])(
         repo,
         body: "private memory contents",
         frontmatter: {
+          description: "A memory description.",
           title: "Private protected memory",
           scope: ["."],
           doNotDelete: true,
@@ -224,7 +225,7 @@ it("includes response instructions in duration and keeps concurrent calls separa
           roots: [repo],
           repo,
           body: "content",
-          frontmatter: { title: "One", scope: ["."] },
+          frontmatter: { description: "A memory description.", title: "One", scope: ["."] },
         },
       }),
       client.callTool({ name: "delete-memories", arguments: { paths: [join(repo, "missing")] } }),
@@ -369,8 +370,14 @@ it("keeps project IDs separate for concurrent searches", async () => {
     "-C", other, "config", "remote.origin.url", "https://private-token@example.invalid/two.git",
   ]);
   await Promise.all([
-    client.callTool({ name: "search-memories", arguments: { roots: [repo], repo, query: "anything" } }),
-    client.callTool({ name: "search-memories", arguments: { roots: [other], repo: other, query: "anything" } }),
+    client.callTool({
+      name: "search-memories",
+      arguments: { roots: [repo], repo, query: "anything" },
+    }),
+    client.callTool({
+      name: "search-memories",
+      arguments: { roots: [other], repo: other, query: "anything" },
+    }),
   ]);
   await settle();
   expect(events).toHaveLength(2);
@@ -390,7 +397,10 @@ it("records every project in mixed-repo upvote and delete batches", async () => 
     const result = await client.callTool({
       name: "insert-memory",
       arguments: {
-        roots: [root], repo: root, body: "content", frontmatter: { title: "One", scope: ["."] },
+        roots: [root],
+        repo: root,
+        body: "content",
+        frontmatter: { description: "A memory description.", title: "One", scope: ["."] },
       },
     });
     paths.push(...JSON.parse((result.content as { text: string }[])[0]!.text));

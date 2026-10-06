@@ -140,17 +140,14 @@ it("skips unsupported agents while installing for supported ones", async () => {
 it.each([
   { detected: [] as agents.AgentType[] },
   { detected: ["claude-desktop"] as agents.AgentType[] },
-])(
-  "does not invoke the installer without supported targets: $detected",
-  async ({ detected }) => {
-    detect.mockResolvedValue(detected);
-    await installWritingSkill(ctx, { cwd: root, cliRoot: root });
-    expect(exec).not.toHaveBeenCalled();
-    expect(ctx.log.warn).toHaveBeenCalledWith(
-      expect.stringContaining("the writing skill was not installed"),
-    );
-  },
-);
+])("does not invoke the installer without supported targets: $detected", async ({ detected }) => {
+  detect.mockResolvedValue(detected);
+  await installWritingSkill(ctx, { cwd: root, cliRoot: root });
+  expect(exec).not.toHaveBeenCalled();
+  expect(ctx.log.warn).toHaveBeenCalledWith(
+    expect.stringContaining("the writing skill was not installed"),
+  );
+});
 
 it("shows installer output in verbose mode", async () => {
   await installWritingSkill(ctx, { cwd: root, cliRoot: root, verbose: true });

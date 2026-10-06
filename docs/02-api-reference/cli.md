@@ -8,9 +8,10 @@ icon: Terminal
 ```bash title="Terminal"
 tiramisu insert --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app <<'EOF'
 {
-  "body": "Retry the client once after a reconnect; do not stack interceptors.",
+  "body": "The reconnect handler registered another retry interceptor on the same Axios instance...",
   "frontmatter": {
     "title": "Axios retry duplication after reconnect",
+    "description": "Reconnects registered Axios retry interceptors more than once. Read when debugging duplicate requests after reconnects, changing client initialization, or adding retry logic.",
     "scope": ["apps/web"]
   }
 }
@@ -28,9 +29,9 @@ For more details about adding memories, see [`insert-memory`](./mcp.md#insert-me
 ## `tiramisu update`
 
 ```bash title="Terminal"
-tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/.memories/cache-responses <<'EOF'
+tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/apps/web/.memories/axios-retry-duplication-after-reconnect <<'EOF'
 {
-  "body": "Invalidate cached responses when permissions change."
+  "body": "The reconnect handler registered another retry interceptor on the same Axios instance..."
 }
 EOF
 ```
@@ -38,7 +39,7 @@ EOF
 Alternatively, you may pass the `.json` file using the `--input` flag.
 
 ```bash title="Terminal"
-tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/.memories/cache-responses --input updated-memory.json
+tiramisu update --roots /Users/adam/Desktop/acme/acme-app --repo /Users/adam/Desktop/acme/acme-app --path /Users/adam/Desktop/acme/acme-app/apps/web/.memories/axios-retry-duplication-after-reconnect --input updated-memory.json
 ```
 
 For more details about updating memories, see [`update-memory`](./mcp.md#update-memory).

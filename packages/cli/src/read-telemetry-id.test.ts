@@ -42,15 +42,12 @@ it.each([
   '{"id":"2b91e9e3-25eb-4f63-a882-49186f0f6cb0","salt":"invalid"}',
   "broken json",
   "null",
-])(
-  "silently disables telemetry for unavailable identity: %s",
-  async (value) => {
-    await mkdir(join(home, ".tiramisu"));
-    await writeFile(join(home, ".tiramisu", "telemetry.json"), value);
-    expect(await readTelemetryId()).toBeUndefined();
-    expect(await readFile(join(home, ".tiramisu", "telemetry.json"), "utf8")).toBe(value);
-  },
-);
+])("silently disables telemetry for unavailable identity: %s", async (value) => {
+  await mkdir(join(home, ".tiramisu"));
+  await writeFile(join(home, ".tiramisu", "telemetry.json"), value);
+  expect(await readTelemetryId()).toBeUndefined();
+  expect(await readFile(join(home, ".tiramisu", "telemetry.json"), "utf8")).toBe(value);
+});
 
 it("does not fail the CLI when the configuration directory cannot be created", async () => {
   await writeFile(join(home, ".tiramisu"), "existing file");
