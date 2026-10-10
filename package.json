@@ -19,7 +19,7 @@
     "build": "bun run --filter ./packages/cli build"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.6.4",
     "fallow": "^2.85.0",
     "oxfmt": "^0.50.0",
     "oxlint": "^1.65.0",

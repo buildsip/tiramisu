@@ -59,7 +59,7 @@
   },
   "devDependencies": {
     "@buildsip/file-utils": "workspace:*",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.6.4",
     "@types/pg": "^8.23.1",
     "@types/semver": "^7.8.0",
     "drizzle-kit": "^0.31.11",
